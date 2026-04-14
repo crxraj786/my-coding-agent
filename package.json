@@ -1,0 +1,14 @@
+{
+  "name": "my-coding-agent",
+  "version": "1.0.0",
+  "description": "AI Auto-Deploy Agent",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo 'Build complete'"
+  },
+  "keywords": ["ai", "agent", "auto-deploy"],
+  "author": "crxraj786",
+  "license": "MIT",
+  "dependencies": {}
+}
