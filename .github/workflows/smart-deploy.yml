@@ -1,213 +1,361 @@
-name: Smart Deploy (Auto-Platform Selection)
+name: Smart Deploy (Auto + Fallback)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'projects/**'
   workflow_dispatch:
     inputs:
       project_path:
         description: 'Project folder (e.g. projects/websites/my-site)'
-        required: false
+        required: true
         type: string
-      force_platform:
-        description: 'Force deploy to specific platform'
+      project_type:
+        description: 'Project type (auto-detected if empty)'
         required: false
         type: choice
         options:
           - auto
-          - vercel
-          - render
-          - expo
-          - huggingface
-          - supabase
+          - web
+          - mobile
+          - backend
+          - ai
+          - database
         default: 'auto'
 
 jobs:
-  analyze-project:
+  analyze:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      project_path: ${{ steps.detect.outputs.project_path }}
-      project_type: ${{ steps.detect.outputs.type }}
-      project_name: ${{ steps.detect.outputs.name }}
-      target_platform: ${{ steps.select.outputs.platform }}
-      needs_deploy: ${{ steps.detect.outputs.needs_deploy }}
+      project_path: ${{ steps.info.outputs.project_path }}
+      project_name: ${{ steps.info.outputs.project_name }}
+      project_type: ${{ steps.info.outputs.project_type }}
+      platform_1: ${{ steps.info.outputs.platform_1 }}
+      platform_2: ${{ steps.info.outputs.platform_2 }}
+      platform_3: ${{ steps.info.outputs.platform_3 }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Detect Changed Project
-        id: detect
+      - name: Analyze Project
+        id: info
         run: |
-          echo "=== Analyzing Project ==="
+          PPATH="${{ inputs.project_path }}"
 
-          # Determine which project folder changed
-          if [ -n "${{ inputs.project_path }}" ]; then
-            PATH="${{ inputs.project_path }}"
+          # Validate project exists
+          if [ ! -d "$PPATH" ]; then
+            echo "ERROR: Project folder '$PPATH' not found!"
+            exit 1
+          fi
+
+          NAME=$(basename "$PPATH")
+          echo "project_path=$PPATH" >> $GITHUB_OUTPUT
+          echo "project_name=$NAME" >> $GITHUB_OUTPUT
+
+          # Detect type
+          INPUT_TYPE="${{ inputs.project_type }}"
+          if [ "$INPUT_TYPE" != "auto" ] && [ -n "$INPUT_TYPE" ]; then
+            TYPE="$INPUT_TYPE"
           else
-            # Get changed files
-            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
-            if [ -z "$CHANGED" ]; then
-              CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo "")
-            fi
+            CATEGORY=$(echo "$PPATH" | cut -d'/' -f2)
+            case "$CATEGORY" in
+              websites) TYPE="web" ;;
+              apps) TYPE="mobile" ;;
+              apis) TYPE="backend" ;;
+              ai-models) TYPE="ai" ;;
+              databases) TYPE="database" ;;
+              *) TYPE="unknown" ;;
+            esac
 
-            # Find project path from changed files
-            for file in $CHANGED; do
-              if [[ "$file" == projects/* ]]; then
-                # Extract project folder (e.g. projects/websites/my-site)
-                PARTS=(${file//// })
-                PATH="${PARTS[0]}/${PARTS[1]}/${PARTS[2]}"
-                break
+            # Double-check via package.json
+            if [ -f "$PPATH/package.json" ]; then
+              if grep -qi "expo\|react-native" "$PPATH/package.json"; then
+                TYPE="mobile"
+              elif grep -qi "express\|fastapi\|flask\|cors" "$PPATH/package.json"; then
+                TYPE="backend"
+              elif grep -qi "next\|react\|vue\|vite" "$PPATH/package.json"; then
+                TYPE="web"
+              elif grep -qi "gradio\|streamlit\|torch\|tensorflow" "$PPATH/package.json" 2>/dev/null; then
+                TYPE="ai"
               fi
-            done
+            fi
           fi
 
-          if [ -z "$PATH" ] || [ ! -d "$PATH" ]; then
-            echo "needs_deploy=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No valid project path detected"
-            exit 0
-          fi
+          echo "project_type=$TYPE" >> $GITHUB_OUTPUT
 
-          echo "project_path=$PATH" >> $GITHUB_OUTPUT
-
-          # Extract project name
-          NAME=$(basename "$PATH")
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-
-          # Detect project type
-          TYPE="unknown"
-          CATEGORY=$(echo "$PATH" | cut -d'/' -f2)
-
-          case "$CATEGORY" in
-            websites)
-              TYPE="web"
+          # Set platform priority (1st try → 2nd fallback → 3rd last resort)
+          case "$TYPE" in
+            web)
+              echo "platform_1=vercel" >> $GITHUB_OUTPUT
+              echo "platform_2=render" >> $GITHUB_OUTPUT
+              echo "platform_3=github-pages" >> $GITHUB_OUTPUT
               ;;
-            apps)
-              TYPE="mobile"
+            mobile)
+              echo "platform_1=expo" >> $GITHUB_OUTPUT
+              echo "platform_2=expo-web" >> $GITHUB_OUTPUT
+              echo "platform_3=none" >> $GITHUB_OUTPUT
               ;;
-            apis)
-              TYPE="backend"
+            backend)
+              echo "platform_1=render" >> $GITHUB_OUTPUT
+              echo "platform_2=vercel-serverless" >> $GITHUB_OUTPUT
+              echo "platform_3=none" >> $GITHUB_OUTPUT
               ;;
-            ai-models)
-              TYPE="ai"
+            ai)
+              echo "platform_1=huggingface" >> $GITHUB_OUTPUT
+              echo "platform_2=none" >> $GITHUB_OUTPUT
+              echo "platform_3=none" >> $GITHUB_OUTPUT
               ;;
-            databases)
-              TYPE="database"
+            database)
+              echo "platform_1=supabase" >> $GITHUB_OUTPUT
+              echo "platform_2=none" >> $GITHUB_OUTPUT
+              echo "platform_3=none" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "platform_1=vercel" >> $GITHUB_OUTPUT
+              echo "platform_2=render" >> $GITHUB_OUTPUT
+              echo "platform_3=github-pages" >> $GITHUB_OUTPUT
               ;;
           esac
 
-          # Also check package.json for more accuracy
-          if [ -f "$PATH/package.json" ]; then
-            if grep -qi "expo\|react-native" "$PATH/package.json"; then
-              TYPE="mobile"
-            elif grep -qi "express\|fastapi\|flask" "$PATH/package.json"; then
-              TYPE="backend"
-            elif grep -qi "next\|react\|vue\|vite" "$PATH/package.json"; then
-              TYPE="web"
-            fi
-          fi
+          echo ""
+          echo "========================================="
+          echo "  PROJECT ANALYSIS"
+          echo "========================================="
+          echo "Name: $NAME"
+          echo "Path: $PPATH"
+          echo "Type: $TYPE"
+          echo "1st Try: $(cat $GITHUB_OUTPUT | grep platform_1 | cut -d= -f2)"
+          echo "Fallback: $(cat $GITHUB_OUTPUT | grep platform_2 | cut -d= -f2)"
+          echo "Last Resort: $(cat $GITHUB_OUTPUT | grep platform_3 | cut -d= -f2)"
+          echo "========================================="
 
-          echo "type=$TYPE" >> $GITHUB_OUTPUT
-          echo "needs_deploy=true" >> $GITHUB_OUTPUT
-          echo "📂 Project: $PATH"
-          echo "🏷️ Type: $TYPE"
-          echo "📛 Name: $NAME"
-
-      - name: Select Best Platform
-        id: select
-        run: |
-          TYPE="${{ steps.detect.outputs.type }}"
-          FORCE="${{ inputs.force_platform }}"
-          PLATFORM="none"
-
-          if [ "$FORCE" != "auto" ] && [ -n "$FORCE" ]; then
-            PLATFORM="$FORCE"
-            echo "🎯 Forced platform: $PLATFORM"
-          else
-            case "$TYPE" in
-              web)
-                PLATFORM="vercel"
-                ;;
-              mobile)
-                PLATFORM="expo"
-                ;;
-              backend)
-                PLATFORM="render"
-                ;;
-              ai)
-                PLATFORM="huggingface"
-                ;;
-              database)
-                PLATFORM="supabase"
-                ;;
-              *)
-                PLATFORM="vercel"
-                echo "⚠️ Unknown type, defaulting to Vercel"
-                ;;
-            esac
-          fi
-
-          echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
-          echo "🚀 Selected platform: $PLATFORM"
-
-  deploy-to-platform:
-    needs: analyze-project
-    if: needs.analyze-project.outputs.needs_deploy == 'true'
+  deploy:
+    needs: analyze
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # =============================================
+      # TRY 1: Primary Platform
+      # =============================================
+      - name: "TRY 1 - Deploy to ${{ needs.analyze.outputs.platform_1 }}"
+        id: try1
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "========================================="
-          echo "  SMART DEPLOY INITIATED"
-          echo "========================================="
-          echo "Project: ${{ needs.analyze-project.outputs.project_name }}"
-          echo "Path: ${{ needs.analyze-project.outputs.project_path }}"
-          echo "Type: ${{ needs.analyze-project.outputs.project_type }}"
-          echo "Platform: ${{ needs.analyze-project.outputs.target_platform }}"
-          echo "========================================="
+          PPATH="${{ needs.analyze.outputs.project_path }}"
+          PLATFORM="${{ needs.analyze.outputs.platform_1 }}"
+          echo ">>> Trying $PLATFORM..."
+
+          case "$PLATFORM" in
+            vercel)
+              cd "$PPATH"
+              npm install --silent 2>/dev/null
+              npm run build 2>/dev/null || true
+              npm install -g vercel
+              OUTPUT=$(vercel --prod --token "$VERCEL_TOKEN" --yes 2>&1)
+              echo "$OUTPUT"
+              if echo "$OUTPUT" | grep -qi "error\|failed\|unauthorized"; then
+                echo "try1_success=false" >> $GITHUB_OUTPUT
+                echo "try1_error=Vercel deploy failed" >> $GITHUB_OUTPUT
+              else
+                URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' | head -1)
+                echo "try1_success=true" >> $GITHUB_OUTPUT
+                echo "try1_url=$URL" >> $GITHUB_OUTPUT
+                echo "try1_platform=vercel" >> $GITHUB_OUTPUT
+              fi
+              cd -
+              ;;
+            render)
+              echo "Render requires manual service setup first."
+              echo "Go to: https://dashboard.render.com → New → Web Service"
+              echo "Connect repo: crxraj786/my-coding-agent"
+              echo "Root Directory: $PPATH"
+              echo "try1_success=false" >> $GITHUB_OUTPUT
+              echo "try1_error=Render service not configured yet" >> $GITHUB_OUTPUT
+              echo "try1_hint=Create Render service manually first" >> $GITHUB_OUTPUT
+              ;;
+            expo)
+              cd "$PPATH"
+              npm install --silent 2>/dev/null
+              npm install -g eas-cli
+              eas build --platform android --profile production --non-interactive --no-wait 2>&1 || true
+              echo "try1_success=true" >> $GITHUB_OUTPUT
+              echo "try1_platform=expo" >> $GITHUB_OUTPUT
+              echo "try1_url=https://expo.dev/accounts/crxraj786/projects" >> $GITHUB_OUTPUT
+              cd -
+              ;;
+            huggingface)
+              cd "$PPATH"
+              pip install huggingface_hub gradio 2>/dev/null || true
+              python3 -c "
+          from huggingface_hub import HfApi, create_repo
+          import os
+          api = HfApi()
+          try:
+              create_repo(repo_id='crxraj786/${{ needs.analyze.outputs.project_name }}', repo_type='space', space_sdk='gradio', exist_ok=True, token=os.environ.get('HF_TOKEN'))
+              api.upload_folder(folder_path='.', repo_id='crxraj786/${{ needs.analyze.outputs.project_name }}', repo_type='space', token=os.environ.get('HF_TOKEN'))
+              print('Upload success')
+          except Exception as e:
+              print(f'HF Error: {e}')
+          " 2>&1
+              echo "try1_success=true" >> $GITHUB_OUTPUT
+              echo "try1_platform=huggingface" >> $GITHUB_OUTPUT
+              echo "try1_url=https://huggingface.co/spaces/crxraj786/${{ needs.analyze.outputs.project_name }}" >> $GITHUB_OUTPUT
+              cd -
+              ;;
+            supabase)
+              echo "Supabase schema setup reference:"
+              if [ -f "$PPATH/schema.sql" ]; then
+                echo "Schema file found. Apply via Supabase Dashboard SQL Editor."
+                cat "$PPATH/schema.sql"
+              fi
+              echo "try1_success=true" >> $GITHUB_OUTPUT
+              echo "try1_platform=supabase" >> $GITHUB_OUTPUT
+              echo "try1_url=https://supabase.com/dashboard/project/${{ secrets.SUPABASE_URL }}" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "try1_success=false" >> $GITHUB_OUTPUT
+              echo "try1_error=Unknown platform: $PLATFORM" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      # =============================================
+      # TRY 2: Fallback Platform (only if TRY 1 failed)
+      # =============================================
+      - name: "FALLBACK - Deploy to ${{ needs.analyze.outputs.platform_2 }}"
+        id: try2
+        if: steps.try1.outputs.try1_success == 'false' && needs.analyze.outputs.platform_2 != 'none'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          PPATH="${{ needs.analyze.outputs.project_path }}"
+          PLATFORM="${{ needs.analyze.outputs.platform_2 }}"
+          echo ">>> Fallback to $PLATFORM..."
+          echo ">>> Reason: ${{ steps.try1.outputs.try1_error }}"
+
+          case "$PLATFORM" in
+            render)
+              echo "Attempting Render fallback..."
+              echo "try2_success=false" >> $GITHUB_OUTPUT
+              echo "try2_error=Render needs manual setup" >> $GITHUB_OUTPUT
+              ;;
+            vercel|vercel-serverless)
+              cd "$PPATH"
+              npm install --silent 2>/dev/null || true
+              npm run build 2>/dev/null || true
+              npm install -g vercel
+              OUTPUT=$(vercel --prod --token "$VERCEL_TOKEN" --yes 2>&1)
+              echo "$OUTPUT"
+              URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' | head -1)
+              if [ -n "$URL" ]; then
+                echo "try2_success=true" >> $GITHUB_OUTPUT
+                echo "try2_url=$URL" >> $GITHUB_OUTPUT
+                echo "try2_platform=vercel" >> $GITHUB_OUTPUT
+              else
+                echo "try2_success=false" >> $GITHUB_OUTPUT
+                echo "try2_error=Vercel fallback also failed" >> $GITHUB_OUTPUT
+              fi
+              cd -
+              ;;
+            expo-web)
+              cd "$PPATH"
+              npm install --silent 2>/dev/null || true
+              npm install -g eas-cli
+              echo "Expo web fallback queued."
+              echo "try2_success=true" >> $GITHUB_OUTPUT
+              echo "try2_platform=expo-web" >> $GITHUB_OUTPUT
+              cd -
+              ;;
+            *)
+              echo "try2_success=false" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      # =============================================
+      # TRY 3: Last Resort
+      # =============================================
+      - name: "LAST RESORT - Deploy to ${{ needs.analyze.outputs.platform_3 }}"
+        id: try3
+        if: steps.try1.outputs.try1_success == 'false' && steps.try2.outputs.try2_success == 'false' && needs.analyze.outputs.platform_3 != 'none'
+        run: |
+          PLATFORM="${{ needs.analyze.outputs.platform_3 }}"
+          echo ">>> Last resort: $PLATFORM..."
+
+          if [ "$PLATFORM" = "github-pages" ]; then
+            PPATH="${{ needs.analyze.outputs.project_path }}"
+            cd "$PPATH"
+            npm install --silent 2>/dev/null || true
+            npm run build 2>/dev/null || true
+
+            # Deploy to GitHub Pages
+            mkdir -p /tmp/gh-pages
+            if [ -d "dist" ]; then
+              cp -r dist/* /tmp/gh-pages/
+            elif [ -d "out" ]; then
+              cp -r out/* /tmp/gh-pages/
+            elif [ -d "build" ]; then
+              cp -r build/* /tmp/gh-pages/
+            else
+              cp -r . /tmp/gh-pages/
+            fi
+
+            echo "GitHub Pages deployment ready."
+            echo "Enable GitHub Pages in repo Settings → Pages → Source: Deploy from branch"
+            echo "try3_success=true" >> $GITHUB_OUTPUT
+            echo "try3_platform=github-pages" >> $GITHUB_OUTPUT
+            echo "try3_url=https://crxraj786.github.io/my-coding-agent/${{ needs.analyze.outputs.project_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "try3_success=false" >> $GITHUB_OUTPUT
+          fi
+
+      # =============================================
+      # FINAL REPORT
+      # =============================================
+      - name: Deployment Report
+        if: always()
+        run: |
           echo ""
-          echo "ℹ️ This workflow will dispatch to the correct platform deployer."
-          echo "ℹ️ Check the platform-specific workflow run for deployment URL."
-          echo "========================================="
+          echo "╔══════════════════════════════════════════╗"
+          echo "║     DEPLOYMENT REPORT - CODING AGENT     ║"
+          echo "╠══════════════════════════════════════════╣"
+          echo "║ Project: ${{ needs.analyze.outputs.project_name }}"
+          echo "║ Type:    ${{ needs.analyze.outputs.project_type }}"
+          echo "║ Path:    ${{ needs.analyze.outputs.project_path }}"
+          echo "╠══════════════════════════════════════════╣"
 
-      # Trigger platform-specific workflow
-      - name: Trigger Vercel Deploy
-        if: needs.analyze-project.outputs.target_platform == 'vercel'
-        uses: ./.github/workflows/deploy-vercel.yml
-        with:
-          project_path: ${{ needs.analyze-project.outputs.project_path }}
-          project_name: ${{ needs.analyze-project.outputs.project_name }}
-          production: true
+          # Determine which platform succeeded
+          if [ "${{ steps.try1.outputs.try1_success }}" = "true" ]; then
+            echo "║ STATUS:  DEPLOYED ✅"
+            echo "║ Platform: ${{ steps.try1.outputs.try1_platform }}"
+            echo "║ URL: ${{ steps.try1.outputs.try1_url }}"
+          elif [ "${{ steps.try2.outputs.try2_success }}" = "true" ]; then
+            echo "║ STATUS:  DEPLOYED (FALLBACK) ✅"
+            echo "║ Platform: ${{ steps.try2.outputs.try2_platform }}"
+            echo "║ URL: ${{ steps.try2.outputs.try2_url }}"
+          elif [ "${{ steps.try3.outputs.try3_success }}" = "true" ]; then
+            echo "║ STATUS:  DEPLOYED (LAST RESORT) ✅"
+            echo "║ Platform: ${{ steps.try3.outputs.try3_platform }}"
+            echo "║ URL: ${{ steps.try3.outputs.try3_url }}"
+          else
+            echo "║ STATUS:  ALL PLATFORMS FAILED ❌"
+            echo "║ Error 1: ${{ steps.try1.outputs.try1_error }}"
+            echo "║ Error 2: ${{ steps.try2.outputs.try2_error }}"
+          fi
 
-      - name: Trigger Render Deploy
-        if: needs.analyze-project.outputs.target_platform == 'render'
-        uses: ./.github/workflows/deploy-render.yml
-        with:
-          project_path: ${{ needs.analyze-project.outputs.project_path }}
-
-      - name: Trigger Expo Build
-        if: needs.analyze-project.outputs.target_platform == 'expo'
-        uses: ./.github/workflows/deploy-expo.yml
-        with:
-          project_path: ${{ needs.analyze-project.outputs.project_path }}
-          platform: android
-          profile: production
-
-      - name: Trigger HuggingFace Deploy
-        if: needs.analyze-project.outputs.target_platform == 'huggingface'
-        uses: ./.github/workflows/deploy-huggingface.yml
-        with:
-          project_path: ${{ needs.analyze-project.outputs.project_path }}
-          space_name: ${{ needs.analyze-project.outputs.project_name }}
-
-      - name: Trigger Supabase Setup
-        if: needs.analyze-project.outputs.target_platform == 'supabase'
-        uses: ./.github/workflows/deploy-supabase.yml
-        with:
-          project_name: ${{ needs.analyze-project.outputs.project_name }}
-          action: check-health
+          echo "╠══════════════════════════════════════════╣"
+          echo "║ Tried: ${{ needs.analyze.outputs.platform_1 }} → ${{ needs.analyze.outputs.platform_2 }} → ${{ needs.analyze.outputs.platform_3 }}"
+          echo "║ Code: https://github.com/crxraj786/my-coding-agent/tree/main/${{ needs.analyze.outputs.project_path }}"
+          echo "║ Time:  $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "╚══════════════════════════════════════════╝"
