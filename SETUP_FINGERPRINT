@@ -4,27 +4,25 @@
 # Yeh file sab protected files ke checksums store karti hai.
 # Kisi bhi change ke baad verify-setup.sh run karo.
 # Agar checksum match nahi karta → setup KHRAB hua hai.
-# Agar bhai ne explicitly setup change karwaya ho toh
-# fingerprint update karo: bash scripts/update-fingerprint.sh
 # ============================================
-# LAST UPDATED: 2026-04-16
+# LAST UPDATED: 2026-04-15T18:48:14Z
 # ============================================
 
-.gitignore:PLACEHOLDER
-.env.example:PLACEHOLDER
-SYSTEM_SPECIFICATION.md:PLACEHOLDER
-README.md:PLACEHOLDER
-.github/workflows/deploy-vercel.yml:PLACEHOLDER
-.github/workflows/deploy-render.yml:PLACEHOLDER
-.github/workflows/deploy-expo.yml:PLACEHOLDER
-.github/workflows/deploy-huggingface.yml:PLACEHOLDER
-.github/workflows/deploy-supabase.yml:PLACEHOLDER
-.github/workflows/smart-deploy.yml:PLACEHOLDER
-scripts/create-project.sh:PLACEHOLDER
-scripts/deploy.sh:PLACEHOLDER
-scripts/copy-secrets.sh:PLACEHOLDER
-scripts/protect-setup.sh:PLACEHOLDER
-scripts/pre-commit:PLACEHOLDER
-scripts/install-hooks.sh:PLACEHOLDER
-scripts/verify-setup.sh:PLACEHOLDER
-scripts/update-fingerprint.sh:PLACEHOLDER
+.gitignore:2a795e0888cdb71e7bb86ec6ac6fe58f85ff63b35d5e07a66190d758ae635f93
+.env.example:0dcc14076924b652086d20d0006eb9c2accb16108b5b604b9d86066e007ffe3f
+SYSTEM_SPECIFICATION.md:8833bbf98ff16c82827e703b820b49af6e24dca5179166f8333614fab9498b1b
+README.md:e2b7a204a3f4749e096ae1eeb8aa5ba1bd6ff27d2cac0aaba3e1a10feaff6353
+.github/workflows/deploy-vercel.yml:90f44640ab01a2e09f0cc0fba3845bf1b11f7df72225c2a6d81fd07d9343c52b
+.github/workflows/deploy-render.yml:17dd61bd5c54573a32436f506e0c0ee57e078c67598ca19130611549eadd35db
+.github/workflows/deploy-expo.yml:2a89b6d23f4c6eed0bd6d59a0d157e735b832c3fdbeda53be454c5e085295b5c
+.github/workflows/deploy-huggingface.yml:b0bdc6af8c83bffb726207857bdd972906acf839b7237a11f92954bf49cf7a68
+.github/workflows/deploy-supabase.yml:fb646169f863c57b62510184f4ad2a1cf3c5a6fc92df5b76f1a6246dbc54f8ca
+.github/workflows/smart-deploy.yml:ccf18ccaf83bf283e530942d889a6e18ccb3d34ca4b4a468386875406207d496
+scripts/create-project.sh:9805b7d1c6464113087c7aea8e35e2895b4598f9a9c5a0fe63e257bd7a41c93e
+scripts/deploy.sh:e334c72e88c7c541d5fa89f172dd818fce2e4e30d4d5735df43e29eb8e4fe50d
+scripts/copy-secrets.sh:83c534343a75885f03f7baaf12da560a821a8a2d86795332371eb4fe21f93137
+scripts/protect-setup.sh:fcdb9b5f109a574130e5b99bcdc19ee687eb21ac10aa9c1df385866212f7abb2
+scripts/pre-commit:b7d6204cf885f9836801ef9e1dd8c56ed1df973b293ff51e757f0a6c6da9f809
+scripts/install-hooks.sh:a89963de9baa73fc9836136385ee95c9bd377e2f446cc9885258e7e92f0d986a
+scripts/verify-setup.sh:1400c77b3fe4b5f294ee957d7b41e3190eacdb0a6c6060e4e218fc6d172e50f8
+scripts/update-fingerprint.sh:c157293ac865d18de9939b1a3c709e91056df2b32bbcaf0bdcdb90a646746274
