@@ -277,3 +277,56 @@ NO paid platforms. Sirf free tier use karenge.
 
 16.5 Bhai ko testing ke baare mein kuchh batana NAHI padega.
     Main khud automatically test karunga — yeh meri responsibility hai.
+
+## 17. SETUP PROTECTION (MOST CRITICAL — NEVER VIOLATE)
+
+17.1 Setup/Infrastructure files KABHI modify NAHI karne:
+    PROTECTED FILES (kabhi edit mat karo):
+    - .gitignore
+    - .env.example
+    - SYSTEM_SPECIFICATION.md
+    - README.md
+
+    PROTECTED DIRECTORIES (kabhi edit mat karo):
+    - .github/workflows/ (sab 6 workflow files)
+    - scripts/ (sab 4 helper scripts)
+
+17.2 KAUN SI FILES EDIT KAR SAKTE HO:
+    Sirf projects/ folder ke andar:
+    - projects/websites/<name>/ → edit allowed
+    - projects/apps/<name>/ → edit allowed
+    - projects/apis/<name>/ → edit allowed
+    - projects/ai-models/<name>/ → edit allowed
+    - projects/databases/<name>/ → edit allowed
+    - root level files (.gitignore etc) → NEVER
+
+17.3 KYON PROTECTED HAI:
+    - .gitignore delete hua → .env files push ho jayenge → SECRETS LEAK ❌
+    - Workflow change hua → automatic deploy start ho sakta hai ❌
+    - .env.example change → real tokens accidentally add ho sakte hain ❌
+    - scripts change → protection system break ho sakta hai ❌
+
+17.4 PROTECTION CHECK SCRIPT:
+    scripts/protect-setup.sh — har push se pehle run karega.
+    Agar protected files modified hain toh PUSH BLOCK ho jayega.
+    Override: PROTECT_SETUP=override git push (only if SURE)
+
+17.5 AGAR DUSRE AGENT KO PAT DO:
+    Woh technically modify kar SAKTA hai (PAT mein full access hai).
+    Lekin woh SYSTEM_SPECIFICATION.md padhna chahiye.
+    Yeh document CONSTITUTION hai — sab rules yahan hain.
+
+17.6 AGAR SETUP KHRAB HO JAYE:
+    - SYSTEM_SPECIFICATION.md mein sab rules hain — rebuild kar sakte ho
+    - scripts/ folder mein sab templates hain
+    - Har naye chat mein main specification padh kar setup verify karunga
+    - Agar kuchh missing/galt hai toh main fix kar dunga
+
+17.7 RULE: Har project work ke time PEHLE check:
+    - "Kya main koi protected file touch kar raha hoon?"
+    - Agar HAAN → STOP → Sirf projects/ mein kaam karo
+    - Agar NAHI → SAFE → Continue
+
+17.8 YEH SABSE IMPORTANT RULE HAI SECURITY KE LIYE.
+    Setup files ko kabhi bhi accidentally ya intentionally
+    modify mat karna — project code sirf projects/ mein.
