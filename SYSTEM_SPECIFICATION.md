@@ -45,30 +45,53 @@ Main khud decide karunga:
 
 ## 4. PROJECT MANAGEMENT RULES
 
-4.1 Har naya project ALAG folder mein hoga.
+4.1 Har naya project ALAG folder mein hoga (DEFAULT — my-coding-agent repo ke andar).
     Path format: projects/<type>/<project-name>/
     Types: websites/, apps/, apis/, ai-models/, databases/
 
-4.2 Purane project ki files mein CHHEDCHHAD NAHI hogi
+    EXAMPLE: Bhai bole "portfolio website bana do"
+    → Main banaunga: projects/websites/portfolio/
+    → HAMESHA my-coding-agent repo mein — naya repo NAHI banunga
+    → NAYA REPO tabhi banunga jab bhai KHUD bole "alag repo mein daal do"
+
+4.2 PROJECT DHUNDHNA — bhai ko pura path/repo naam batana ZARURI NAHI:
+    - Bhai bole "portfolio website bana do" → Main khud projects/ mein bana dunga
+    - Bhai bole "us login wale project mein fix karo" → Main sab projects check karunga, match karunga
+    - Bhai bole "xyz project mein kaam karo" → Main dhundhunga kaun sa repo/folder hai
+    - Bhai ko sirf PROJECT KA NAAM ya KAAM batana hai — main khud manage karunga
+    - SIRF private repos ke liye bhai ko repo naam batana padega (PAT se access hota hai)
+
+4.3 NAYA REPO BANANE KA PROCESS (sirf bhai ke bolne pe):
+    a) Naya private repo create karunga (GitHub API)
+    b) scripts/copy-secrets.sh run karunga → sab 8 secrets AUTOMATICALLY copy
+    c) Code push karunga
+    d) Bhai ko MANUAL kuchh NAHI karna — sab automatic hai
+    e) Secrets: VERCEL_TOKEN, RENDER_TOKEN, EXPO_TOKEN, SUPABASE×3, HF, GEMINI
+
+4.4 Purane project ki files mein CHHEDCHHAD NAHI hogi
     jab tak bhai specifically na bole.
 
-4.3 Jab bhai existing project mein change bole:
+4.5 Jab bhai existing project mein change bole:
     - Sirf wahi files open karunga
     - Sirf wahi change karunga jo bola hai
     - Baaki sab kuch SAME rahega
     - Koi extra change NAHI karunga
     - Koi doosri file ko touch NAHI karunga
 
-4.4 Project confirm karunga:
+4.6 Project confirm karunga:
     - Bhai bole "is project pe kaam karo"
     - Main check karunga ki yeh project exist karta hai ya nahi
     - Agar hai toh match karunga aur confirm karunga
     - Agar nahi hai toh naya banaunga
     - Bhai "naya project hai" bole toh seedha naya banunga
 
-4.5 Files kabhi mix NAHI hongi:
+4.7 Files kabhi mix NAHI hongi:
     - Naya project = Naya folder = Naya deploy
     - Purana project = Sirf targeted changes
+
+4.8 PROJECT STRUCTURE SUMMARY:
+    DEFAULT (90% cases): my-coding-agent repo → projects/<type>/<name>/ folder
+    SPECIAL (bhai bole): Naya alag repo + automatic secrets copy
 
 ## 5. CODE WRITING RULES
 
