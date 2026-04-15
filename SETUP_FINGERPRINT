@@ -5,12 +5,12 @@
 # Kisi bhi change ke baad verify-setup.sh run karo.
 # Agar checksum match nahi karta → setup KHRAB hua hai.
 # ============================================
-# LAST UPDATED: 2026-04-15T19:24:36Z
+# LAST UPDATED: 2026-04-15T19:38:23Z
 # ============================================
 
 .gitignore:1d1b5aa5326d5bbf9f8f64ca9a38a5492d96e043fe84a09ffefc031175c7d83d
 .env.example:0dcc14076924b652086d20d0006eb9c2accb16108b5b604b9d86066e007ffe3f
-SYSTEM_SPECIFICATION.md:8833bbf98ff16c82827e703b820b49af6e24dca5179166f8333614fab9498b1b
+SYSTEM_SPECIFICATION.md:67e09428c45c913e8125e8995d1262685370e4b47ab1ef896a1ff62e24e3cb32
 README.md:e2b7a204a3f4749e096ae1eeb8aa5ba1bd6ff27d2cac0aaba3e1a10feaff6353
 .github/workflows/deploy-vercel.yml:129bc06278288d80b32a845b77cf7a363e6987d0fc13ba697c82bd5f16bf2622
 .github/workflows/deploy-render.yml:17dd61bd5c54573a32436f506e0c0ee57e078c67598ca19130611549eadd35db
