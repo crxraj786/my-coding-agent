@@ -211,6 +211,12 @@ Har kaam complete hone ke baad report:
     create-project.sh        → New project template
     deploy.sh                → Deploy helper
     copy-secrets.sh          → Secrets copy to new repo
+    protect-setup.sh         → Pre-push protection check
+    pre-commit               → Git pre-commit hook (blocks protected edits)
+    install-hooks.sh         → Installs pre-commit hook on clone
+    verify-setup.sh          → Verifies all setup files integrity
+    update-fingerprint.sh    → Updates checksums after intentional changes
+  SETUP_FINGERPRINT          → Checksums of all protected files
   .gitignore                 → Blocks all secrets
   .env.example               → Template (no real values)
   README.md                  → Documentation
@@ -232,7 +238,11 @@ Har kaam complete hone ke baad report:
 14.1 Bhai sirf PAT token dega.
 14.2 Main repo clone karunga.
 14.3 Sab workflows, secrets, scripts GitHub pe hain — permanently.
-14.4 Bas kaam shuru — bhai requirement batao.
+14.4 PROTECTION VERIFY (MANDATORY — pehle yeh karo):
+    a) bash scripts/install-hooks.sh — pre-commit hook install karo
+    b) bash scripts/verify-setup.sh — sab setup files intact hain check karo
+    c) Agar verify mein kuchh missing hai → fix karo pehle project work se pehle
+14.5 Bas kaam shuru — bhai requirement batao.
 
 ## 15. AVAILABLE PLATFORMS (FREE ONLY)
 
@@ -278,55 +288,122 @@ NO paid platforms. Sirf free tier use karenge.
 16.5 Bhai ko testing ke baare mein kuchh batana NAHI padega.
     Main khud automatically test karunga — yeh meri responsibility hai.
 
-## 17. SETUP PROTECTION (MOST CRITICAL — NEVER VIOLATE)
+## 17. SETUP PROTECTION (BULLETPROOF — 3 LAYER DEFENSE)
 
-17.1 Setup/Infrastructure files KABHI modify NAHI karne:
-    PROTECTED FILES (kabhi edit mat karo):
+============================================================
+Bhai ne specifically kaha: "kuchh aisa karo ki setup kharab na ho sake"
+Isliye yeh 3-LAYER protection system banaya hai.
+KOI BHI AGENT (main ya koi aur) accidentally ya intentionally
+setup ko modify KARE TOH yeh system use rok dega.
+============================================================
+
+=== LAYER 1: GIT PRE-COMMIT HOOK (Automatic Block) ===
+
+17.1 Pre-commit hook automatically install hota hai:
+    - scripts/install-hooks.sh run karo after clone
+    - Hook .git/hooks/pre-commit mein copy hota hai
+
+17.2 Yeh hook karta hai kya:
+    - Har git commit se PEHLE automatically run hota hai
+    - Check karta hai ki koi protected file staged hai ya nahi
+    - Agar HAAN → COMMIT BLOCK → Error message with explanation
+    - Agar NAHI → Commit proceed normally
+
+17.3 KYA PROTECTED HAI (hook yeh files block karega):
+
+    PROTECTED ROOT FILES (kabhi edit mat karo):
     - .gitignore
     - .env.example
     - SYSTEM_SPECIFICATION.md
     - README.md
+    - SETUP_FINGERPRINT
 
-    PROTECTED DIRECTORIES (kabhi edit mat karo):
-    - .github/workflows/ (sab 6 workflow files)
-    - scripts/ (sab 4 helper scripts)
+    PROTECTED DIRECTORIES (andar kuch bhi edit mat karo):
+    - .github/workflows/  (sab 6 workflow files)
+    - scripts/            (sab 8 script files)
 
-17.2 KAUN SI FILES EDIT KAR SAKTE HO:
-    Sirf projects/ folder ke andar:
-    - projects/websites/<name>/ → edit allowed
-    - projects/apps/<name>/ → edit allowed
-    - projects/apis/<name>/ → edit allowed
-    - projects/ai-models/<name>/ → edit allowed
-    - projects/databases/<name>/ → edit allowed
-    - root level files (.gitignore etc) → NEVER
+17.4 BINA override ke, yeh files KABHI commit nahi ho sakti.
+    Override sirf tab use karo jab BHAI EXPLICITLY bola ho:
+    git commit --no-verify -m "bhai ne bola setup change karna"
 
-17.3 KYON PROTECTED HAI:
-    - .gitignore delete hua → .env files push ho jayenge → SECRETS LEAK ❌
-    - Workflow change hua → automatic deploy start ho sakta hai ❌
-    - .env.example change → real tokens accidentally add ho sakte hain ❌
-    - scripts change → protection system break ho sakta hai ❌
+=== LAYER 2: SETUP FINGERPRINT (Tamper Detection) ===
 
-17.4 PROTECTION CHECK SCRIPT:
-    scripts/protect-setup.sh — har push se pehle run karega.
-    Agar protected files modified hain toh PUSH BLOCK ho jayega.
-    Override: PROTECT_SETUP=override git push (only if SURE)
+17.5 SETUP_FINGERPRINT file sab protected files ke SHA256 checksums
+    store karti hai. Yeh yeh kaam karti hai:
 
-17.5 AGAR DUSRE AGENT KO PAT DO:
-    Woh technically modify kar SAKTA hai (PAT mein full access hai).
-    Lekin woh SYSTEM_SPECIFICATION.md padhna chahiye.
-    Yeh document CONSTITUTION hai — sab rules yahan hain.
+    a) VERIFY: bash scripts/verify-setup.sh
+       - Check karta hai ki saari expected files exist karti hain
+       - Check karta hai ki saari expected directories hain
+       - Check karta hai ki pre-commit hook installed hai
+       - Check karta hai ki .gitignore mein critical entries hain
+       - Agar kuchh missing → ERROR + fix suggestions
 
-17.6 AGAR SETUP KHRAB HO JAYE:
-    - SYSTEM_SPECIFICATION.md mein sab rules hain — rebuild kar sakte ho
-    - scripts/ folder mein sab templates hain
-    - Har naye chat mein main specification padh kar setup verify karunga
-    - Agar kuchh missing/galt hai toh main fix kar dunga
+    b) UPDATE: bash scripts/update-fingerprint.sh
+       - Run karo JAB BHAI NE EXPLICITLY setup change karwaya ho
+       - Naye checksums generate karke SETUP_FINGERPRINT update karega
+       - Khud se kabhi mat run karo
 
-17.7 RULE: Har project work ke time PEHLE check:
-    - "Kya main koi protected file touch kar raha hoon?"
-    - Agar HAAN → STOP → Sirf projects/ mein kaam karo
-    - Agar NAHI → SAFE → Continue
+17.6 FINGERPRINT SYSTEM KYA PROTECT KARTA HAI:
+    - Agar koi file delete ho gayi → verify mein missing dikhegi
+    - Agar koi file modify ho gayi → fingerprint mismatch hoga
+    - Agar koi naya file add hui expected list mein nahi → flagged
+    - Har naye chat mein verify-setup.sh run karo → setup intact hai ya nahi
 
-17.8 YEH SABSE IMPORTANT RULE HAI SECURITY KE LIYE.
-    Setup files ko kabhi bhi accidentally ya intentionally
-    modify mat karna — project code sirf projects/ mein.
+=== LAYER 3: SYSTEM_SPECIFICATION RULES (Constitution) ===
+
+17.7 Yeh document (SYSTEM_SPECIFICATION.md) CONSTITUTION hai:
+    - Har agent ko PEHLE yeh document padhna chahiye
+    - Section 17 ke rules FOLLOW KARNE HAIN
+    - Agar koi agent yeh rules ignore kare toh woh RESPONSIBLE hai
+
+17.8 RULE: Har project work ke time PEHLE check:
+    Step 1: "Main koi protected file touch kar raha hoon?"
+    Step 2: Agar HAAN → STOP → Sirf projects/ mein kaam karo
+    Step 3: Agar NAHI → SAFE → Continue
+
+17.9 RULE: Project code SIRF yahan:
+    projects/websites/<name>/    ← YAHAN KAAM KARO
+    projects/apps/<name>/        ← YAHAN KAAM KARO
+    projects/apis/<name>/        ← YAHAN KAAM KARO
+    projects/ai-models/<name>/   ← YAHAN KAAM KARO
+    projects/databases/<name>/   ← YAHAN KAAM KARO
+
+    BAaki jagah SIRF padhne ka — EDIT NAHI.
+
+=== AGAR DUSRE AGENT KO PAT DO ===
+
+17.10 Dusre agent technically modify KAR SAKTA HAI (PAT mein full access).
+     Lekin:
+     a) Pre-commit hook commit automatically BLOCK karega
+     b) verify-setup.sh se check kar sakte ho ki setup intact hai ya nahi
+     c) Agar setup khrab hui toh git history se restore kar sakte ho
+     d) SYSTEM_SPECIFICATION.md mein sab rules hain — rebuild possible
+
+17.11 AGAR SETUP KHRAB HO JAYE (worst case):
+     a) bash scripts/verify-setup.sh — check karo kya missing hai
+     b) git log — dekho kab last time setup theek thi
+     c) git checkout <commit> -- <file> — specific file restore
+     d) git checkout <commit> -- .github/ scripts/ — pura setup restore
+     e) Agar completely lost — SYSTEM_SPECIFICATION.md mein sab documented hai
+     f) Main (naya chat mein) setup rebuild kar dunga specification se
+
+=== SETUP CHANGE KARNA HAI TOH ===
+
+17.12 Agar BHAI KHUD bole ki setup change karni hai:
+     a) Pehle bhai ko confirm karo — "Bhai yeh file change ho jayegi, theek hai?"
+     b) Changes karo
+     c) bash scripts/update-fingerprint.sh — checksums update karo
+     d) git commit --no-verify — override protection
+     e) Push karo
+
+17.13 KHUD SE KABHI SETUP CHANGE MAT KARO.
+     Main bhi project kaam ke time setup files ko touch NAHI karunga.
+     SIRF jab bhai explicitly bole tab hi setup change hoga.
+
+17.14 YEH SECTION 17 SABSE IMPORTANT RULE HAI.
+     Setup files ko kabhi bhi accidentally ya intentionally
+     modify mat karna — project code sirf projects/ mein.
+     3 layers of protection hain:
+     Layer 1: Pre-commit hook (automatic block)
+     Layer 2: Fingerprint verification (tamper detection)
+     Layer 3: Constitution rules (agent behavior control)

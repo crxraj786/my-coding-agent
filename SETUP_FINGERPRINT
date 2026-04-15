@@ -1,0 +1,30 @@
+# ============================================
+# SETUP FINGERPRINT — INTEGRITY VERIFICATION
+# ============================================
+# Yeh file sab protected files ke checksums store karti hai.
+# Kisi bhi change ke baad verify-setup.sh run karo.
+# Agar checksum match nahi karta → setup KHRAB hua hai.
+# Agar bhai ne explicitly setup change karwaya ho toh
+# fingerprint update karo: bash scripts/update-fingerprint.sh
+# ============================================
+# LAST UPDATED: 2026-04-16
+# ============================================
+
+.gitignore:PLACEHOLDER
+.env.example:PLACEHOLDER
+SYSTEM_SPECIFICATION.md:PLACEHOLDER
+README.md:PLACEHOLDER
+.github/workflows/deploy-vercel.yml:PLACEHOLDER
+.github/workflows/deploy-render.yml:PLACEHOLDER
+.github/workflows/deploy-expo.yml:PLACEHOLDER
+.github/workflows/deploy-huggingface.yml:PLACEHOLDER
+.github/workflows/deploy-supabase.yml:PLACEHOLDER
+.github/workflows/smart-deploy.yml:PLACEHOLDER
+scripts/create-project.sh:PLACEHOLDER
+scripts/deploy.sh:PLACEHOLDER
+scripts/copy-secrets.sh:PLACEHOLDER
+scripts/protect-setup.sh:PLACEHOLDER
+scripts/pre-commit:PLACEHOLDER
+scripts/install-hooks.sh:PLACEHOLDER
+scripts/verify-setup.sh:PLACEHOLDER
+scripts/update-fingerprint.sh:PLACEHOLDER
