@@ -212,3 +212,35 @@ Har kaam complete hone ke baad report:
 - Gemini AI (code assistance when needed)
 
 NO paid platforms. Sirf free tier use karenge.
+
+## 16. TESTING BEFORE DELIVERY (MANDATORY)
+
+16.1 Har project complete hone ke baad, deliver karne se PEHLE:
+    - Code mein koi error/bug toh nahi hai — check karunga
+    - Saari files properly bani hain — verify karunga
+    - Dependencies correct hain — check karunga
+    - Build successful ho raha hai — test karunga
+    - Koi adhura kaam toh nahi reh gaya — verify karunga
+    - Console mein koi warning/error toh nahi — check karunga
+    - Responsive design (mobile + desktop) — verify karunga
+    - Links, buttons, forms properly kaam kar rahe — test karunga
+
+16.2 Testing process:
+    - Code review karunga khud
+    - Build run karunga
+    - Agar web hai — pages properly load ho rahe
+    - Agar API hai — endpoints respond kar rahe
+    - Agar app hai — build successful ho
+    - Agar database hai — tables properly bane
+
+16.3 Agar testing mein kuchh issue mile:
+    - Fix karunga immediately
+    - Phir se test karunga
+    - Jab tak 100% clean nahi hota, deliver NAHI karunga
+
+16.4 Deliver report mein bhi test status dunga:
+    - "All tests passed ✅"
+    - Ya "X issues found and fixed ✅"
+
+16.5 Bhai ko testing ke baare mein kuchh batana NAHI padega.
+    Main khud automatically test karunga — yeh meri responsibility hai.
