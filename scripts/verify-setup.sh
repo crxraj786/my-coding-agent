@@ -149,8 +149,17 @@ echo -e "${CYAN}Checking .gitignore security entries...${NC}"
 TOTAL_CHECKED=$((TOTAL_CHECKED + 1))
 if [ -f "$REPO_ROOT/.gitignore" ]; then
   GITIGNORE_OK=true
-  for entry in ".env" ".env.local" "*.key" "*.pem"; do
-    if ! grep -q "$entry" "$REPO_ROOT/.gitignore"; then
+  # Check catch-all pattern (.env.* covers all .env variants)
+  if ! grep -qF ".env" "$REPO_ROOT/.gitignore"; then
+    echo -e "${RED}  ❌ .gitignore missing .env patterns${NC}"
+    GITIGNORE_OK=false
+  fi
+  if ! grep -qF ".env.*" "$REPO_ROOT/.gitignore" && ! grep -qF ".env.local" "$REPO_ROOT/.gitignore"; then
+    echo -e "${RED}  ❌ .gitignore missing .env.* or .env.local pattern${NC}"
+    GITIGNORE_OK=false
+  fi
+  for entry in "*.key" "*.pem"; do
+    if ! grep -qF "$entry" "$REPO_ROOT/.gitignore"; then
       echo -e "${RED}  ❌ .gitignore missing entry: $entry${NC}"
       GITIGNORE_OK=false
     fi
@@ -162,6 +171,47 @@ if [ -f "$REPO_ROOT/.gitignore" ]; then
     FAILED=$((FAILED + 1))
   fi
 fi
+
+# ===== LAYER 2: SHA256 CHECKSUM VERIFICATION =====
+echo ""
+echo -e "${CYAN}=== LAYER 2: SHA256 CHECKSUM VERIFICATION ===${NC}"
+echo -e "${CYAN}Comparing file checksums against SETUP_FINGERPRINT...${NC}"
+
+CHECKSUM_TOTAL=0
+CHECKSUM_PASS=0
+CHECKSUM_FAIL=0
+
+while IFS=':' read -r file expected_hash; do
+  # Skip comments and empty lines
+  [[ "$file" =~ ^#.*$ ]] && continue
+  [[ "$file" =~ ^[[:space:]]*$ ]] && continue
+  [[ -z "$file" ]] && continue
+
+  CHECKSUM_TOTAL=$((CHECKSUM_TOTAL + 1))
+  TOTAL_CHECKED=$((TOTAL_CHECKED + 1))
+
+  FULL_PATH="$REPO_ROOT/$file"
+  if [ ! -f "$FULL_PATH" ]; then
+    echo -e "${RED}  ❌ TAMPERED/MISSING  $file (file not found)${NC}"
+    CHECKSUM_FAIL=$((CHECKSUM_FAIL + 1))
+    MISSING=$((MISSING + 1))
+    continue
+  fi
+
+  ACTUAL_HASH=$(sha256sum "$FULL_PATH" | awk '{print $1}')
+
+  if [ "$ACTUAL_HASH" = "$expected_hash" ]; then
+    echo -e "${GREEN}  ✅ MATCH  $file${NC}"
+    CHECKSUM_PASS=$((CHECKSUM_PASS + 1))
+    PASSED=$((PASSED + 1))
+  else
+    echo -e "${RED}  ❌ TAMPERED  $file${NC}"
+    echo -e "${RED}     Expected: $expected_hash${NC}"
+    echo -e "${RED}     Actual:   $ACTUAL_HASH${NC}"
+    CHECKSUM_FAIL=$((CHECKSUM_FAIL + 1))
+    FAILED=$((FAILED + 1))
+  fi
+done < "$FINGERPRINT_FILE"
 
 # Final result
 echo ""

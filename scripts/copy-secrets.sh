@@ -57,7 +57,7 @@ if [ "$HTTP_CODE" != "200" ]; then
     "https://api.github.com/user/repos" \
     -H "Authorization: Bearer $PAT" \
     -H "Accept: application/vnd.github+json" \
-    -d "{\"name\":\"$NEW_REPO\",\"private\":false,\"auto_init\":true}")
+    -d "{\"name\":\"$NEW_REPO\",\"private\":true,\"auto_init\":true}")
 
   REPO_URL=$(echo "$CREATE_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('html_url',''))" 2>/dev/null)
   if [ -n "$REPO_URL" ]; then

@@ -1,9 +1,6 @@
 # ===== SECURITY - NEVER COMMIT THESE =====
 .env
-.env.local
-.env.production
-.env.development
-.env.*.local
+.env.*
 *.key
 *.pem
 *.p12
@@ -13,13 +10,13 @@
 
 # Coding agent local config
 .coding-agent/
-~/.coding-agent/
 
 # Token/credential files
 credentials.json
 secrets.json
 tokens.json
 config.local.json
+.credentials
 
 # ===== DEPENDENCIES =====
 node_modules/

@@ -57,7 +57,9 @@ jobs:
             DEPLOY_OUTPUT=$(vercel --token "$VERCEL_TOKEN" --yes 2>&1)
           fi
 
-          echo "$DEPLOY_OUTPUT"
+          # Mask token in output before printing
+          SAFE_OUTPUT=$(echo "$DEPLOY_OUTPUT" | sed "s/$VERCEL_TOKEN/***MASKED***/g")
+          echo "$SAFE_OUTPUT"
 
           # Extract deployment URL
           DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' | head -1)

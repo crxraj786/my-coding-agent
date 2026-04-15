@@ -163,7 +163,8 @@ jobs:
               npm run build 2>/dev/null || true
               npm install -g vercel
               OUTPUT=$(vercel --prod --token "$VERCEL_TOKEN" --yes 2>&1)
-              echo "$OUTPUT"
+              SAFE_OUTPUT=$(echo "$OUTPUT" | sed "s/$VERCEL_TOKEN/***MASKED***/g")
+              echo "$SAFE_OUTPUT"
               if echo "$OUTPUT" | grep -qi "error\|failed\|unauthorized"; then
                 echo "try1_success=false" >> $GITHUB_OUTPUT
                 echo "try1_error=Vercel deploy failed" >> $GITHUB_OUTPUT
@@ -221,7 +222,7 @@ jobs:
               fi
               echo "try1_success=true" >> $GITHUB_OUTPUT
               echo "try1_platform=supabase" >> $GITHUB_OUTPUT
-              echo "try1_url=https://supabase.com/dashboard/project/${{ secrets.SUPABASE_URL }}" >> $GITHUB_OUTPUT
+              echo "try1_url=https://supabase.com/dashboard" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "try1_success=false" >> $GITHUB_OUTPUT
@@ -257,7 +258,8 @@ jobs:
               npm run build 2>/dev/null || true
               npm install -g vercel
               OUTPUT=$(vercel --prod --token "$VERCEL_TOKEN" --yes 2>&1)
-              echo "$OUTPUT"
+              SAFE_OUTPUT=$(echo "$OUTPUT" | sed "s/$VERCEL_TOKEN/***MASKED***/g")
+              echo "$SAFE_OUTPUT"
               URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' | head -1)
               if [ -n "$URL" ]; then
                 echo "try2_success=true" >> $GITHUB_OUTPUT

@@ -43,10 +43,10 @@ jobs:
 
           if echo "$RESPONSE" | grep -q "error"; then
             echo "❌ Supabase connection issue!"
-            echo "Response: $RESPONSE"
+            echo "Response: $(echo "$RESPONSE" | sed "s/$SUPABASE_ANON_KEY/***MASKED***/g")"
           else
             echo "✅ Supabase is reachable!"
-            echo "Project URL: ${{ secrets.SUPABASE_URL }}"
+            echo "Project URL: $SUPABASE_URL"
           fi
 
       - name: Setup Schema
@@ -64,7 +64,7 @@ jobs:
           # Using Supabase REST API with service role key for DDL
           # Note: For complex schemas, use Supabase Dashboard SQL Editor
           echo "ℹ️ For full SQL schema setup, use Supabase Dashboard:"
-          echo "   https://supabase.com/dashboard/project/${{ secrets.SUPABASE_URL }}"
+          echo "   https://supabase.com/dashboard"
           echo "   Go to SQL Editor → New Query → Paste schema SQL → Run"
           echo ""
           echo "Schema file content preview:"
