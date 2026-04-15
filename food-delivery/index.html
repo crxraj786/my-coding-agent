@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodieExpress - Fast Food Delivery</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>FoodieExpress</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#restaurants">Restaurants</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="cart-icon" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Delicious Food Delivered To Your Doorstep</h1>
+            <p>Order from your favorite restaurants and get fast delivery</p>
+            <button class="btn-primary" onclick="document.getElementById('restaurants').scrollIntoView({behavior: 'smooth'})">Order Now</button>
+        </div>
+    </section>
+
+    <!-- Restaurants Section -->
+    <section id="restaurants" class="restaurants">
+        <div class="container">
+            <h2 class="section-title">Popular Restaurants</h2>
+            <div class="restaurant-grid" id="restaurant-list">
+                <!-- Restaurants will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="menu-section">
+        <div class="container">
+            <h2 class="section-title">Our Menu</h2>
+            <div class="menu-filters">
+                <button class="filter-btn active" data-category="all">All</button>
+                <button class="filter-btn" data-category="pizza">Pizza</button>
+                <button class="filter-btn" data-category="burger">Burgers</button>
+                <button class="filter-btn" data-category="indian">Indian</button>
+                <button class="filter-btn" data-category="dessert">Desserts</button>
+            </div>
+            <div class="menu-grid" id="menu-list">
+                <!-- Menu items will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h3>Your Cart</h3>
+                <button class="close-btn" onclick="toggleCart()">&times;</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <!-- Cart items will be loaded dynamically -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cart-total">₹0</span>
+                </div>
+                <button class="btn-primary btn-checkout" onclick="showCheckoutForm()">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Form Modal -->
+    <div class="checkout-modal" id="checkout-modal">
+        <div class="checkout-content">
+            <div class="checkout-header">
+                <h3>Checkout</h3>
+                <button class="close-btn" onclick="hideCheckoutForm()">&times;</button>
+            </div>
+            <form id="checkout-form" onsubmit="placeOrder(event)">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" required placeholder="Enter your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="address">Delivery Address</label>
+                    <textarea id="address" required placeholder="Enter your complete address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="payment">Payment Method</label>
+                    <select id="payment" required>
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="online">Online Payment</option>
+                        <option value="upi">UPI</option>
+                    </select>
+                </div>
+                <div class="order-summary">
+                    <h4>Order Summary</h4>
+                    <div id="order-summary-items"></div>
+                    <div class="order-total">
+                        <span>Total Amount:</span>
+                        <span id="order-total">₹0</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary btn-place-order">Place Order</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Phone</h4>
+                        <p>+91 9876543210</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>support@foodieexpress.com</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h4>Address</h4>
+                        <p>Mumbai, Maharashtra, India</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 FoodieExpress. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Success Message -->
+    <div class="success-message" id="success-message">
+        <i class="fas fa-check-circle"></i>
+        <p>Order placed successfully!</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
