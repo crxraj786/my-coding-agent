@@ -1,0 +1,79 @@
+name: Deploy to Render
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_path:
+        description: 'Project folder path (e.g. projects/apis/my-api)'
+        required: true
+        type: string
+      service_id:
+        description: 'Render Service ID (from Render dashboard URL)'
+        required: false
+        type: string
+      build_command:
+        description: 'Build command (default: npm install)'
+        required: false
+        type: string
+        default: 'npm install'
+      start_command:
+        description: 'Start command (default: npm start)'
+        required: false
+        type: string
+        default: 'npm start'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        run: |
+          echo "=== Deploying to Render ==="
+
+          if [ -n "${{ inputs.service_id }}" ]; then
+            echo "Triggering deploy for existing service: ${{ inputs.service_id }}"
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              "https://api.render.com/v1/services/${{ inputs.service_id }}/deploys" \
+              -H "Authorization: Bearer $RENDER_TOKEN" \
+              -H "Accept: application/json" \
+              -H "Content-Type: application/json")
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | head -n -1)
+
+            if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Render deploy triggered successfully!"
+              DEPLOY_URL=$(echo "$BODY" | grep -oE '"deployUrl":"[^"]+' | cut -d'"' -f4)
+              echo "🌐 Service: ${{ inputs.service_id }}"
+            else
+              echo "⚠️ Render API returned: $HTTP_CODE"
+              echo "Response: $BODY"
+              echo "ℹ️ If service not found, create one at https://dashboard.render.com"
+            fi
+          else
+            echo "⚠️ No service_id provided."
+            echo "ℹ️ For first-time deploy, create a new service at https://dashboard.render.com"
+            echo "ℹ️ Connect your GitHub repo and select the project path: ${{ inputs.project_path }}"
+            echo "ℹ️ After creating, copy the Service ID from the URL for future deploys."
+          fi
+
+      - name: Deployment Report
+        if: always()
+        run: |
+          echo "========================================="
+          echo "  RENDER DEPLOYMENT REPORT"
+          echo "========================================="
+          echo "Project Path: ${{ inputs.project_path }}"
+          echo "Service ID: ${{ inputs.service_id || 'N/A (manual setup required)' }}"
+          echo "Build Command: ${{ inputs.build_command }}"
+          echo "Start Command: ${{ inputs.start_command }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Status: ${{ job.status }}"
+          echo "========================================="

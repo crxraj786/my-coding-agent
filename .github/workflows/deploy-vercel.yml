@@ -1,0 +1,84 @@
+name: Deploy to Vercel
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_path:
+        description: 'Project folder path (e.g. projects/websites/my-site)'
+        required: true
+        type: string
+      project_name:
+        description: 'Vercel project name'
+        required: true
+        type: string
+      production:
+        description: 'Deploy to production?'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.project_path }}/package.json'
+
+      - name: Install Dependencies
+        working-directory: ${{ inputs.project_path }}
+        run: npm install
+
+      - name: Build Project
+        working-directory: ${{ inputs.project_path }}
+        run: npm run build 2>/dev/null || echo "No build script, skipping build"
+
+      - name: Deploy to Vercel
+        working-directory: ${{ inputs.project_path }}
+        run: |
+          echo "=== Deploying ${{ inputs.project_name }} to Vercel ==="
+
+          # Install Vercel CLI
+          npm install -g vercel
+
+          # Deploy
+          if [ "${{ inputs.production }}" = "true" ]; then
+            DEPLOY_OUTPUT=$(vercel --prod --token "$VERCEL_TOKEN" --yes 2>&1)
+          else
+            DEPLOY_OUTPUT=$(vercel --token "$VERCEL_TOKEN" --yes 2>&1)
+          fi
+
+          echo "$DEPLOY_OUTPUT"
+
+          # Extract deployment URL
+          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' | head -1)
+
+          if [ -n "$DEPLOY_URL" ]; then
+            echo "✅ Deployed successfully!"
+            echo "🌐 Live URL: $DEPLOY_URL"
+            echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Deployment may have issues. Check Vercel dashboard."
+          fi
+
+      - name: Deployment Report
+        if: always()
+        run: |
+          echo "========================================="
+          echo "  VERCEL DEPLOYMENT REPORT"
+          echo "========================================="
+          echo "Project: ${{ inputs.project_name }}"
+          echo "Path: ${{ inputs.project_path }}"
+          echo "Environment: ${{ inputs.production && 'Production' || 'Preview' }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Status: ${{ job.status }}"
+          echo "========================================="

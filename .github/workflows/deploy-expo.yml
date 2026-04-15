@@ -1,0 +1,78 @@
+name: Build Mobile App (Expo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_path:
+        description: 'Project folder path (e.g. projects/apps/my-app)'
+        required: true
+        type: string
+      platform:
+        description: 'Build platform'
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - all
+      profile:
+        description: 'Build profile'
+        required: false
+        type: string
+        default: 'production'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.project_path }}/package.json'
+
+      - name: Setup Expo
+        run: npm install -g eas-cli
+
+      - name: Install Dependencies
+        working-directory: ${{ inputs.project_path }}
+        run: npm install
+
+      - name: Build for Android
+        if: inputs.platform == 'android' || inputs.platform == 'all'
+        working-directory: ${{ inputs.project_path }}
+        run: |
+          echo "=== Building Android APK ==="
+          eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
+          echo "✅ Android build queued on Expo!"
+
+      - name: Build for iOS
+        if: inputs.platform == 'ios' || inputs.platform == 'all'
+        working-directory: ${{ inputs.project_path }}
+        run: |
+          echo "=== Building iOS ==="
+          eas build --platform ios --profile ${{ inputs.profile }} --non-interactive --no-wait
+          echo "✅ iOS build queued on Expo!"
+
+      - name: Build Report
+        if: always()
+        run: |
+          echo "========================================="
+          echo "  EXPO BUILD REPORT"
+          echo "========================================="
+          echo "Project Path: ${{ inputs.project_path }}"
+          echo "Platform: ${{ inputs.platform }}"
+          echo "Profile: ${{ inputs.profile }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Status: ${{ job.status }}"
+          echo ""
+          echo "ℹ️ Check build status at: https://expo.dev/accounts/crxraj786/projects"
+          echo "ℹ️ Download APK from Expo dashboard when build completes"
+          echo "========================================="

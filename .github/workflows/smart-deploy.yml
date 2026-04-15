@@ -1,64 +1,213 @@
-name: 🤖 Smart Auto-Deploy
+name: Smart Deploy (Auto-Platform Selection)
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'projects/**'
   workflow_dispatch:
+    inputs:
+      project_path:
+        description: 'Project folder (e.g. projects/websites/my-site)'
+        required: false
+        type: string
+      force_platform:
+        description: 'Force deploy to specific platform'
+        required: false
+        type: choice
+        options:
+          - auto
+          - vercel
+          - render
+          - expo
+          - huggingface
+          - supabase
+        default: 'auto'
 
 jobs:
-  detect-and-deploy:
+  analyze-project:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v3
+    timeout-minutes: 5
+    outputs:
+      project_path: ${{ steps.detect.outputs.project_path }}
+      project_type: ${{ steps.detect.outputs.type }}
+      project_name: ${{ steps.detect.outputs.name }}
+      target_platform: ${{ steps.select.outputs.platform }}
+      needs_deploy: ${{ steps.detect.outputs.needs_deploy }}
 
-      - name: Detect Project Type
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Changed Project
         id: detect
         run: |
+          echo "=== Analyzing Project ==="
+
+          # Determine which project folder changed
+          if [ -n "${{ inputs.project_path }}" ]; then
+            PATH="${{ inputs.project_path }}"
+          else
+            # Get changed files
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+            if [ -z "$CHANGED" ]; then
+              CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo "")
+            fi
+
+            # Find project path from changed files
+            for file in $CHANGED; do
+              if [[ "$file" == projects/* ]]; then
+                # Extract project folder (e.g. projects/websites/my-site)
+                PARTS=(${file//// })
+                PATH="${PARTS[0]}/${PARTS[1]}/${PARTS[2]}"
+                break
+              fi
+            done
+          fi
+
+          if [ -z "$PATH" ] || [ ! -d "$PATH" ]; then
+            echo "needs_deploy=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No valid project path detected"
+            exit 0
+          fi
+
+          echo "project_path=$PATH" >> $GITHUB_OUTPUT
+
+          # Extract project name
+          NAME=$(basename "$PATH")
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+
+          # Detect project type
           TYPE="unknown"
-          if [ -f "package.json" ]; then
-            if grep -qi "expo\|react-native" package.json; then
+          CATEGORY=$(echo "$PATH" | cut -d'/' -f2)
+
+          case "$CATEGORY" in
+            websites)
+              TYPE="web"
+              ;;
+            apps)
               TYPE="mobile"
-            elif grep -qi "express\|fastapi\|flask\|supabase" package.json; then
+              ;;
+            apis)
               TYPE="backend"
-            elif grep -qi "react\|next\|vite\|html" package.json; then
+              ;;
+            ai-models)
+              TYPE="ai"
+              ;;
+            databases)
+              TYPE="database"
+              ;;
+          esac
+
+          # Also check package.json for more accuracy
+          if [ -f "$PATH/package.json" ]; then
+            if grep -qi "expo\|react-native" "$PATH/package.json"; then
+              TYPE="mobile"
+            elif grep -qi "express\|fastapi\|flask" "$PATH/package.json"; then
+              TYPE="backend"
+            elif grep -qi "next\|react\|vue\|vite" "$PATH/package.json"; then
               TYPE="web"
             fi
           fi
-          [ -f ".deploy-as-mobile" ] && TYPE="mobile"
-          [ -f ".deploy-as-backend" ] && TYPE="backend"
-          [ -f ".deploy-as-web" ] && TYPE="web"
+
           echo "type=$TYPE" >> $GITHUB_OUTPUT
-          echo "🎯 Detected: $TYPE"
+          echo "needs_deploy=true" >> $GITHUB_OUTPUT
+          echo "📂 Project: $PATH"
+          echo "🏷️ Type: $TYPE"
+          echo "📛 Name: $NAME"
 
-      - name: Deploy to Vercel
-        if: steps.detect.outputs.type == 'web'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Select Best Platform
+        id: select
         run: |
-          echo "🚀 Deploying Web to Vercel..."
-          npm install -g vercel
-          vercel --prod --token $VERCEL_TOKEN --yes || echo "⚠️ Vercel deploy skipped"
+          TYPE="${{ steps.detect.outputs.type }}"
+          FORCE="${{ inputs.force_platform }}"
+          PLATFORM="none"
 
-      - name: Deploy to Expo EAS
-        if: steps.detect.outputs.type == 'mobile'
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          echo "🚀 Triggering Expo Build..."
-          npm install -g eas-cli
-          eas build --platform android --profile production --non-interactive --no-wait || echo "⚠️ Expo build queued"
+          if [ "$FORCE" != "auto" ] && [ -n "$FORCE" ]; then
+            PLATFORM="$FORCE"
+            echo "🎯 Forced platform: $PLATFORM"
+          else
+            case "$TYPE" in
+              web)
+                PLATFORM="vercel"
+                ;;
+              mobile)
+                PLATFORM="expo"
+                ;;
+              backend)
+                PLATFORM="render"
+                ;;
+              ai)
+                PLATFORM="huggingface"
+                ;;
+              database)
+                PLATFORM="supabase"
+                ;;
+              *)
+                PLATFORM="vercel"
+                echo "⚠️ Unknown type, defaulting to Vercel"
+                ;;
+            esac
+          fi
 
-      - name: Deploy to Render
-        if: steps.detect.outputs.type == 'backend'
-        env:
-          RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
-        run: |
-          echo "🚀 Deploying Backend to Render..."
-          curl -X POST "https://api.render.com/v1/services/deploy" \
-            -H "Authorization: Bearer $RENDER_TOKEN" || echo "⚠️ Render deploy skipped"
+          echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
+          echo "🚀 Selected platform: $PLATFORM"
 
-      - name: Deployment Complete
+  deploy-to-platform:
+    needs: analyze-project
+    if: needs.analyze-project.outputs.needs_deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy
         run: |
-          echo "✅ Smart Deploy Finished"
-          echo "📦 Type: ${{ steps.detect.outputs.type }}"
+          echo "========================================="
+          echo "  SMART DEPLOY INITIATED"
+          echo "========================================="
+          echo "Project: ${{ needs.analyze-project.outputs.project_name }}"
+          echo "Path: ${{ needs.analyze-project.outputs.project_path }}"
+          echo "Type: ${{ needs.analyze-project.outputs.project_type }}"
+          echo "Platform: ${{ needs.analyze-project.outputs.target_platform }}"
+          echo "========================================="
+          echo ""
+          echo "ℹ️ This workflow will dispatch to the correct platform deployer."
+          echo "ℹ️ Check the platform-specific workflow run for deployment URL."
+          echo "========================================="
+
+      # Trigger platform-specific workflow
+      - name: Trigger Vercel Deploy
+        if: needs.analyze-project.outputs.target_platform == 'vercel'
+        uses: ./.github/workflows/deploy-vercel.yml
+        with:
+          project_path: ${{ needs.analyze-project.outputs.project_path }}
+          project_name: ${{ needs.analyze-project.outputs.project_name }}
+          production: true
+
+      - name: Trigger Render Deploy
+        if: needs.analyze-project.outputs.target_platform == 'render'
+        uses: ./.github/workflows/deploy-render.yml
+        with:
+          project_path: ${{ needs.analyze-project.outputs.project_path }}
+
+      - name: Trigger Expo Build
+        if: needs.analyze-project.outputs.target_platform == 'expo'
+        uses: ./.github/workflows/deploy-expo.yml
+        with:
+          project_path: ${{ needs.analyze-project.outputs.project_path }}
+          platform: android
+          profile: production
+
+      - name: Trigger HuggingFace Deploy
+        if: needs.analyze-project.outputs.target_platform == 'huggingface'
+        uses: ./.github/workflows/deploy-huggingface.yml
+        with:
+          project_path: ${{ needs.analyze-project.outputs.project_path }}
+          space_name: ${{ needs.analyze-project.outputs.project_name }}
+
+      - name: Trigger Supabase Setup
+        if: needs.analyze-project.outputs.target_platform == 'supabase'
+        uses: ./.github/workflows/deploy-supabase.yml
+        with:
+          project_name: ${{ needs.analyze-project.outputs.project_name }}
+          action: check-health

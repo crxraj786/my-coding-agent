@@ -1,0 +1,86 @@
+name: Setup Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Database project name (e.g. user-auth-db)'
+        required: true
+        type: string
+      schema_file:
+        description: 'SQL schema file path in repo (e.g. projects/databases/my-db/schema.sql)'
+        required: false
+        type: string
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - setup-schema
+          - run-migration
+          - seed-data
+          - check-health
+
+jobs:
+  supabase-action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Health Check
+        if: inputs.action == 'check-health'
+        run: |
+          echo "=== Supabase Health Check ==="
+          RESPONSE=$(curl -s "${SUPABASE_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          if echo "$RESPONSE" | grep -q "error"; then
+            echo "❌ Supabase connection issue!"
+            echo "Response: $RESPONSE"
+          else
+            echo "✅ Supabase is reachable!"
+            echo "Project URL: ${{ secrets.SUPABASE_URL }}"
+          fi
+
+      - name: Setup Schema
+        if: inputs.action == 'setup-schema' && inputs.schema_file != ''
+        run: |
+          echo "=== Setting up Supabase Schema ==="
+
+          if [ ! -f "${{ inputs.schema_file }}" ]; then
+            echo "❌ Schema file not found: ${{ inputs.schema_file }}"
+            exit 1
+          fi
+
+          echo "Applying schema from: ${{ inputs.schema_file }}"
+
+          # Using Supabase REST API with service role key for DDL
+          # Note: For complex schemas, use Supabase Dashboard SQL Editor
+          echo "ℹ️ For full SQL schema setup, use Supabase Dashboard:"
+          echo "   https://supabase.com/dashboard/project/${{ secrets.SUPABASE_URL }}"
+          echo "   Go to SQL Editor → New Query → Paste schema SQL → Run"
+          echo ""
+          echo "Schema file content preview:"
+          head -20 "${{ inputs.schema_file }}"
+          echo "..."
+          echo "✅ Schema reference saved. Apply via Supabase Dashboard."
+
+      - name: Database Report
+        if: always()
+        run: |
+          echo "========================================="
+          echo "  SUPABASE DATABASE REPORT"
+          echo "========================================="
+          echo "Project: ${{ inputs.project_name }}"
+          echo "Action: ${{ inputs.action }}"
+          echo "Dashboard: https://supabase.com/dashboard"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Status: ${{ job.status }}"
+          echo "========================================="

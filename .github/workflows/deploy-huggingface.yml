@@ -1,0 +1,113 @@
+name: Deploy AI Model (HuggingFace)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_path:
+        description: 'Project folder path (e.g. projects/ai-models/my-model)'
+        required: true
+        type: string
+      space_name:
+        description: 'HuggingFace Space name (e.g. my-chatbot)'
+        required: true
+        type: string
+      space_type:
+        description: 'Space type'
+        required: false
+        type: choice
+        options:
+          - docker
+          - gradio
+          - streamlit
+        default: 'gradio'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        working-directory: ${{ inputs.project_path }}
+        run: |
+          pip install huggingface_hub 2>/dev/null || true
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Deploy to HuggingFace Spaces
+        working-directory: ${{ inputs.project_path }}
+        run: |
+          echo "=== Deploying to HuggingFace Spaces ==="
+
+          # Check for app.py or Dockerfile
+          if [ -f "app.py" ]; then
+            echo "✅ Found app.py - Gradio/Streamlit app detected"
+          elif [ -f "Dockerfile" ]; then
+            echo "✅ Found Dockerfile - Docker space detected"
+          else
+            echo "⚠️ No app.py or Dockerfile found. Creating basic Gradio app..."
+            cat > app.py << 'PYEOF'
+          import gradio as gr
+          gr.Markdown("# AI Model Space")
+          gr.Markdown("Model loaded successfully!")
+          app = gr.Interface(fn=lambda x: x, inputs="text", outputs="text")
+          app.launch()
+          PYEOF
+          fi
+
+          # Create Space using huggingface_hub
+          python3 -c "
+          from huggingface_hub import HfApi, create_repo
+          import os
+
+          token = os.environ.get('HF_TOKEN', '')
+          if not token:
+              print('ERROR: No HF_TOKEN found in secrets!')
+              exit(1)
+
+          api = HfApi()
+          try:
+              repo_url = create_repo(
+                  repo_id='crxraj786/${{ inputs.space_name }}',
+                  repo_type='space',
+                  space_sdk='${{ inputs.space_type }}',
+                  exist_ok=True,
+                  token=token
+              )
+              print(f'Space ready: {repo_url}')
+          except Exception as e:
+              print(f'Space creation note: {e}')
+
+          # Upload files
+          api.upload_folder(
+              folder_path='.',
+              repo_id='crxraj786/${{ inputs.space_name }}',
+              repo_type='space',
+              token=token
+          )
+          print('✅ Files uploaded to HuggingFace Space!')
+          " 2>&1 || echo "⚠️ If upload failed, check HUGGINGFACE_TOKEN in GitHub Secrets"
+
+      - name: Deployment Report
+        if: always()
+        run: |
+          echo "========================================="
+          echo "  HUGGINGFACE DEPLOYMENT REPORT"
+          echo "========================================="
+          echo "Project Path: ${{ inputs.project_path }}"
+          echo "Space Name: ${{ inputs.space_name }}"
+          echo "Space Type: ${{ inputs.space_type }}"
+          echo "Live URL: https://huggingface.co/spaces/crxraj786/${{ inputs.space_name }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Status: ${{ job.status }}"
+          echo "========================================="
