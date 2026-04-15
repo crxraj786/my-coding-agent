@@ -144,17 +144,50 @@ Har kaam complete hone ke baad report:
 - Status (success/fail)
 - Agar fail toh kyun + kya next step
 
-## 11. LAST RESORT (OWN CLOUD)
+## 11. LAST RESORT (OWN CLOUD/SERVER SYSTEM)
 
-11.1 Agar saare platforms fail ho jaayein:
-    - Main apne cloud system pe deploy karunga.
-    - Code GitHub pe push hoga (tumhare control mein).
-    - CLEAR batunga: "Mere platform pe deploy hua,
-      tumhare given platforms pe nahi hua.
-      Code GitHub pe hai — manually deploy kar sakte ho."
+11.1 PRIORITY ORDER (hamesha yeh sequence follow karega):
+    1. Pehle: Tumhare given platforms try (Vercel, Render, Expo, etc.)
+    2. Fallback: Doosra platform try
+    3. Last: Apna cloud/server system use karo
 
-11.2 Last resort = SABSE LAST OPTION.
-    Pehle hamesha tumhare platforms try karunga.
+11.2 Agar saare platforms fail ho jaayein:
+    - Main apne cloud environment mein project build karunga
+    - Preview link dunga (https://preview-xxx.space.chatglm.site/)
+    - Code GITHUB PE BHI PUSH karunga (tumhare control ke liye)
+    - Download link bhi dunga agar possible ho
+
+11.3 REPORT mein CLEAR batunga:
+    - "Bhai Vercel/Render pe deploy nahi hua (reason: xyz)"
+    - "Mere cloud pe deploy kiya hai"
+    - "Preview link: https://preview-xxx.space.chatglm.site/"
+    - "Code GitHub pe hai: https://github.com/crxraj786/my-coding-agent/tree/main/projects/..."
+    - "Kabhi bhi GitHub se kisi platform pe manually deploy kar sakte ho"
+
+11.4 OWN CLOUD = SABSE LAST OPTION.
+    Hamesha pehle tumhare platforms try karunga.
+    Sirf jab KUCHH BHI KAAM NA KARE toh apna system use karunga.
+
+11.5 Apne cloud pe deploy karne se:
+    - Purane projects par KOI asar NAHI padega
+    - Har project alag hai — koi mixing nahi hogi
+    - Sirf naya project mere cloud pe run hoga
+    - Baaki sab untouched rahega
+
+11.6 MERE CLOUD SYSTEM KYA KAR SAKTA HAI:
+    - Full-stack web apps (Next.js, React)
+    - Static websites (HTML/CSS/JS)
+    - Backend APIs
+    - Database connected apps
+    - Preview link provide
+    - Code files provide (download)
+
+11.7 PLATFORM INFO (jab own cloud use hoga):
+    - Platform Name: "AI Agent Cloud (Last Resort)"
+    - Code Location: GitHub repo (crxraj786/my-coding-agent)
+    - Deploy Location: AI Agent Preview Server
+    - Preview URL: https://preview-xxx.space.chatglm.site/
+    - GitHub Code: https://github.com/crxraj786/my-coding-agent/tree/main/projects/xxx/
 
 ## 12. GITHUB REPO DETAILS
 
