@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Shield, KeyRound, Eye, EyeOff, Loader2, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, KeyRound, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,17 +10,73 @@ import { useAuthStore } from '@/store/auth-store';
 import { loginOwner, loginAdmin } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
+/* ─── Splash Screen ─── */
+function SplashScreen({ onFinish }: { onFinish: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onFinish, 2200);
+    return () => clearTimeout(t);
+  }, [onFinish]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Background orbs */}
+      <div className="orb w-72 h-72 -top-20 -left-20" style={{ background: 'rgba(9,209,199,0.15)' }} />
+      <div className="orb w-64 h-64 -bottom-16 -right-16" style={{ background: 'rgba(70,223,177,0.12)' }} />
+      <div className="orb w-48 h-48 top-1/3 right-1/4" style={{ background: 'rgba(128,238,152,0.08)' }} />
+
+      {/* Logo */}
+      <div
+        className="relative z-10 flex flex-col items-center opacity-0 animate-fade-up"
+      >
+        <div
+          className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6 glow-teal"
+          style={{ background: 'linear-gradient(135deg, #09D1C7, #46DFB1)' }}
+        >
+          <Shield className="w-10 h-10 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-white tracking-wide">
+          LR LICENCE
+        </h1>
+        <p className="text-sm mt-1" style={{ color: '#09D1C7' }}>
+          Verification System
+        </p>
+
+        {/* Loading dots */}
+        <div className="flex items-center gap-1.5 mt-10">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: '#09D1C7',
+                animation: `pulseGlow 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Login Page ─── */
 export default function LoginPage() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [adminId, setAdminId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [showOwnerPassword, setShowOwnerPassword] = useState(false);
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [showOwnerPw, setShowOwnerPw] = useState(false);
+  const [showAdminPw, setShowAdminPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuthStore();
   const { toast } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleOwnerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,15 +88,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await loginOwner(ownerEmail, ownerPassword);
-      login({
-        role: 'owner',
-        token: data.token,
-        email: ownerEmail,
-      });
+      login({ role: 'owner', token: data.token, email: ownerEmail });
       toast({ title: 'Welcome, Owner!' });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -57,8 +108,7 @@ export default function LoginPage() {
     try {
       const data = await loginAdmin(adminId, adminPassword);
       login({
-        role: 'admin',
-        token: data.token,
+        role: 'admin', token: data.token,
         adminId: data.data?.adminId || adminId,
         displayName: data.data?.displayName,
         balance: data.data?.balance,
@@ -66,154 +116,173 @@ export default function LoginPage() {
       });
       toast({ title: `Welcome, ${data.data?.displayName || adminId}!` });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="lr-card p-8">
-          {/* Logo */}
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background orbs */}
+      <div className="orb w-80 h-80 -top-32 -right-32" style={{ background: 'rgba(9,209,199,0.12)' }} />
+      <div className="orb w-72 h-72 -bottom-24 -left-24" style={{ background: 'rgba(70,223,177,0.10)' }} />
+      <div className="orb w-40 h-40 top-1/4 left-1/3" style={{ background: 'rgba(128,238,152,0.06)' }} />
+
+      {/* Login Card */}
+      <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className="glass rounded-3xl p-8 sm:p-10 shadow-2xl">
+
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-[#09D1C7]/10">
-              <Shield className="w-7 h-7 text-[#09D1C7]" />
+            <div
+              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 glow-teal"
+              style={{ background: 'linear-gradient(135deg, #09D1C7, #46DFB1)' }}
+            >
+              <Shield className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">
-              LR Licence Verification
+            <h1 className="text-xl font-bold text-white tracking-wide">
+              LR LICENCE VERIFICATION
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm mt-1" style={{ color: 'var(--lr-4)' }}>
               Secure Key Management System
             </p>
           </div>
 
           {/* Tabs */}
           <Tabs defaultValue="owner" className="w-full">
-            <TabsList className="w-full grid grid-cols-2 mb-6 bg-slate-800/50 border border-slate-700/50 h-10">
+            <TabsList className="w-full grid grid-cols-2 mb-6 h-11 glass-strong rounded-xl p-1">
               <TabsTrigger
                 value="owner"
-                className="data-[state=active]:bg-[#09D1C7] data-[state=active]:text-slate-900 data-[state=active]:font-semibold rounded-md text-sm transition-all"
+                className="rounded-lg text-sm font-medium transition-all duration-200 data-[state=active]:bg-[#09D1C7] data-[state=active]:text-[#213A58] data-[state=active]:shadow-lg text-white/60 hover:text-white/80"
               >
-                <User className="w-4 h-4 mr-1.5" />
-                Owner
+                <Shield className="w-4 h-4 mr-1.5" />
+                Owner Login
               </TabsTrigger>
               <TabsTrigger
                 value="admin"
-                className="data-[state=active]:bg-[#09D1C7] data-[state=active]:text-slate-900 data-[state=active]:font-semibold rounded-md text-sm transition-all"
+                className="rounded-lg text-sm font-medium transition-all duration-200 data-[state=active]:bg-[#09D1C7] data-[state=active]:text-[#213A58] data-[state=active]:shadow-lg text-white/60 hover:text-white/80"
               >
                 <KeyRound className="w-4 h-4 mr-1.5" />
-                Admin
+                Admin Login
               </TabsTrigger>
             </TabsList>
 
-            {/* Owner Login */}
+            {/* Owner Form */}
             <TabsContent value="owner">
-              <form onSubmit={handleOwnerLogin} className="space-y-4">
+              <form onSubmit={handleOwnerLogin} className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-sm text-slate-300">Email Address</Label>
+                  <Label className="text-sm text-white/70">Email Address</Label>
                   <Input
                     type="email"
                     placeholder="owner@example.com"
                     value={ownerEmail}
                     onChange={(e) => setOwnerEmail(e.target.value)}
-                    className="h-11 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7] focus:ring-[#09D1C7]/20"
+                    className="h-12 rounded-xl glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                     autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm text-slate-300">Password</Label>
+                  <Label className="text-sm text-white/70">Password</Label>
                   <div className="relative">
                     <Input
-                      type={showOwnerPassword ? 'text' : 'password'}
+                      type={showOwnerPw ? 'text' : 'password'}
                       placeholder="Enter password"
                       value={ownerPassword}
                       onChange={(e) => setOwnerPassword(e.target.value)}
-                      className="h-11 pr-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7] focus:ring-[#09D1C7]/20"
+                      className="h-12 rounded-xl pr-11 glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                       autoComplete="current-password"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowOwnerPassword(!showOwnerPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      onClick={() => setShowOwnerPw(!showOwnerPw)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                     >
-                      {showOwnerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showOwnerPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-fade-up">
                     {error}
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-sm btn-primary rounded-xl"
+                  className="w-full h-12 rounded-xl btn-gradient text-sm flex items-center justify-center gap-2"
                   disabled={loading}
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Sign In as Owner'
+                    <>
+                      Sign In as Owner
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </Button>
               </form>
             </TabsContent>
 
-            {/* Admin Login */}
+            {/* Admin Form */}
             <TabsContent value="admin">
-              <form onSubmit={handleAdminLogin} className="space-y-4">
+              <form onSubmit={handleAdminLogin} className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-sm text-slate-300">Admin ID</Label>
+                  <Label className="text-sm text-white/70">Admin ID</Label>
                   <Input
                     type="text"
                     placeholder="Enter your admin ID"
                     value={adminId}
                     onChange={(e) => setAdminId(e.target.value)}
-                    className="h-11 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7] focus:ring-[#09D1C7]/20"
+                    className="h-12 rounded-xl glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                     autoComplete="username"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm text-slate-300">Password</Label>
+                  <Label className="text-sm text-white/70">Password</Label>
                   <div className="relative">
                     <Input
-                      type={showAdminPassword ? 'text' : 'password'}
+                      type={showAdminPw ? 'text' : 'password'}
                       placeholder="Enter password"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
-                      className="h-11 pr-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7] focus:ring-[#09D1C7]/20"
+                      className="h-12 rounded-xl pr-11 glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                       autoComplete="current-password"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowAdminPassword(!showAdminPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      onClick={() => setShowAdminPw(!showAdminPw)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                     >
-                      {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showAdminPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-fade-up">
                     {error}
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-sm btn-primary rounded-xl"
+                  className="w-full h-12 rounded-xl btn-gradient text-sm flex items-center justify-center gap-2"
                   disabled={loading}
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Sign In as Admin'
+                    <>
+                      Sign In as Admin
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </Button>
               </form>
@@ -221,7 +290,8 @@ export default function LoginPage() {
           </Tabs>
         </div>
 
-        <p className="text-center text-xs mt-4 text-slate-600">
+        {/* Footer */}
+        <p className="text-center text-xs mt-5 text-white/25">
           LR Licence Verification System &copy; {new Date().getFullYear()}
         </p>
       </div>

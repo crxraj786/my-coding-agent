@@ -15,7 +15,7 @@ export default function AdminDashboard() {
         <StatsCards />
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500">Manage your licence keys</span>
+            <span className="text-sm text-white/40">Manage your licence keys</span>
             <KeyGenerator onKeyGenerated={() => setRefreshKey(p => p + 1)} />
           </div>
           <KeyTable key={`keys-${refreshKey}`} role="admin" />

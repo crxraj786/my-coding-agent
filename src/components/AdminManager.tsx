@@ -11,50 +11,25 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from '@/lib/api';
 import { formatDate } from '@/lib/utils-date';
 import { useToast } from '@/hooks/use-toast';
 
 interface Admin {
-  id: string;
-  adminId: string;
-  displayName: string;
-  status: string;
-  balance: number;
-  initialBalance: number;
-  createdAt: string;
+  id: string; adminId: string; displayName: string; status: string;
+  balance: number; initialBalance: number; createdAt: string;
 }
 
 export default function AdminManager() {
@@ -63,174 +38,114 @@ export default function AdminManager() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{
-    type: 'block' | 'unblock' | 'delete';
-    admin: Admin;
-  } | null>(null);
+  const [confirm, setConfirm] = useState<{ type: 'block' | 'unblock' | 'delete'; admin: Admin } | null>(null);
 
-  const [newAdminId, setNewAdminId] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newDisplayName, setNewDisplayName] = useState('');
-  const [newInitialBalance, setNewInitialBalance] = useState('1000');
+  const [newId, setNewId] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newBal, setNewBal] = useState('1000');
   const [creating, setCreating] = useState(false);
 
-  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
-  const [balanceAmount, setBalanceAmount] = useState('');
-  const [balanceType, setBalanceType] = useState<'credit' | 'debit'>('credit');
+  const [selAdmin, setSelAdmin] = useState<Admin | null>(null);
+  const [balAmt, setBalAmt] = useState('');
+  const [balType, setBalType] = useState<'credit' | 'debit'>('credit');
   const [adjusting, setAdjusting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchAdmins = useCallback(async () => {
     setLoading(true);
-    try {
-      const data = await getAdmins();
-      setAdmins(data.admins || []);
-    } catch {
-      setAdmins([]);
-    } finally {
-      setLoading(false);
-    }
+    try { const d = await getAdmins(); setAdmins(d.admins || []); } catch { setAdmins([]); }
+    finally { setLoading(false); }
   }, []);
-
   useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
 
-  const handleCreateAdmin = async () => {
-    if (!newAdminId.trim() || !newPassword.trim() || !newDisplayName.trim()) {
-      toast({ title: 'Error', description: 'All fields are required.', variant: 'destructive' });
-      return;
+  const handleCreate = async () => {
+    if (!newId.trim() || !newPw.trim() || !newName.trim()) {
+      toast({ title: 'Error', description: 'All fields required.', variant: 'destructive' }); return;
     }
-    const balance = parseInt(newInitialBalance);
-    if (!balance || balance < 1000) {
-      toast({ title: 'Error', description: 'Balance must be at least 1000.', variant: 'destructive' });
-      return;
+    const b = parseInt(newBal);
+    if (!b || b < 1000 || b > 100000) {
+      toast({ title: 'Error', description: 'Balance: min 1,000, max 100,000.', variant: 'destructive' }); return;
     }
-    if (balance > 100000) {
-      toast({ title: 'Error', description: 'Balance cannot exceed 100,000.', variant: 'destructive' });
-      return;
-    }
-
     setCreating(true);
     try {
-      await createAdmin({
-        adminId: newAdminId.trim(),
-        password: newPassword,
-        displayName: newDisplayName.trim(),
-      });
+      await createAdmin({ adminId: newId.trim(), password: newPw, displayName: newName.trim() });
       toast({ title: 'Admin Created' });
-      setCreateOpen(false);
-      setNewAdminId(''); setNewPassword(''); setNewDisplayName(''); setNewInitialBalance('1000');
+      setCreateOpen(false); setNewId(''); setNewPw(''); setNewName(''); setNewBal('1000');
       fetchAdmins();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create admin.';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-    } finally {
-      setCreating(false);
-    }
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' });
+    } finally { setCreating(false); }
   };
 
-  const handleAdjustBalance = async () => {
-    if (!selectedAdmin) return;
-    const amount = parseInt(balanceAmount);
-    if (!amount || amount <= 0) {
-      toast({ title: 'Error', description: 'Amount must be positive.', variant: 'destructive' });
-      return;
-    }
-
+  const handleBalance = async () => {
+    if (!selAdmin) return;
+    const amt = parseInt(balAmt);
+    if (!amt || amt <= 0) { toast({ title: 'Error', description: 'Amount must be positive.', variant: 'destructive' }); return; }
     setAdjusting(true);
     try {
-      const newBal = balanceType === 'credit'
-        ? (selectedAdmin.balance || 0) + amount
-        : (selectedAdmin.balance || 0) - amount;
-      if (newBal < 0) {
-        toast({ title: 'Error', description: 'Balance cannot go below 0.', variant: 'destructive' });
-        setAdjusting(false);
-        return;
-      }
-      await updateAdmin(selectedAdmin.adminId, { balance: newBal });
+      const nb = balType === 'credit' ? (selAdmin.balance || 0) + amt : (selAdmin.balance || 0) - amt;
+      if (nb < 0) { toast({ title: 'Error', description: 'Cannot go below 0.', variant: 'destructive' }); setAdjusting(false); return; }
+      await updateAdmin(selAdmin.adminId, { balance: nb });
       toast({ title: 'Balance Updated' });
-      setBalanceOpen(false);
-      setBalanceAmount('');
-      fetchAdmins();
+      setBalanceOpen(false); setBalAmt(''); fetchAdmins();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to adjust balance.';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-    } finally {
-      setAdjusting(false);
-    }
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' });
+    } finally { setAdjusting(false); }
   };
 
-  const handleAdminAction = async () => {
-    if (!confirmAction) return;
+  const handleAction = async () => {
+    if (!confirm) return;
     setActionLoading(true);
     try {
-      if (confirmAction.type === 'delete') {
-        await deleteAdmin(confirmAction.admin.adminId);
-        toast({ title: 'Deleted' });
-      } else {
-        const newStatus = confirmAction.type === 'block' ? 'blocked' : 'active';
-        await updateAdmin(confirmAction.admin.adminId, { status: newStatus });
-        toast({ title: confirmAction.type === 'block' ? 'Blocked' : 'Unblocked' });
-      }
-      setConfirmAction(null);
-      fetchAdmins();
+      if (confirm.type === 'delete') { await deleteAdmin(confirm.admin.adminId); toast({ title: 'Deleted' }); }
+      else { await updateAdmin(confirm.admin.adminId, { status: confirm.type === 'block' ? 'blocked' : 'active' }); toast({ title: confirm.type === 'block' ? 'Blocked' : 'Unblocked' }); }
+      setConfirm(null); fetchAdmins();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Action failed.';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const openBalanceDialog = (admin: Admin) => {
-    setSelectedAdmin(admin);
-    setBalanceAmount('');
-    setBalanceType('credit');
-    setBalanceOpen(true);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' });
+    } finally { setActionLoading(false); }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex items-center gap-2 text-white/50">
           <Users className="w-4 h-4" />
           <span className="text-sm">{admins.length} admin(s)</span>
         </div>
-
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="btn-primary rounded-lg h-9 text-sm">
-              <UserPlus className="w-4 h-4 mr-1.5" />
-              Create Admin
+            <Button className="btn-gradient rounded-xl h-10 text-sm gap-1.5">
+              <UserPlus className="w-4 h-4" /> Create Admin
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-md">
+          <DialogContent className="glass-strong rounded-2xl sm:max-w-md border-white/10">
             <DialogHeader>
-              <DialogTitle className="text-white">Create New Admin</DialogTitle>
+              <DialogTitle className="text-white text-lg">Create New Admin</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-2">
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Admin ID <span className="text-red-400">*</span></Label>
-                <Input placeholder="Enter admin ID" value={newAdminId} onChange={(e) => setNewAdminId(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7]" />
+                <Label className="text-sm text-white/70">Admin ID <span className="text-red-400">*</span></Label>
+                <Input placeholder="Enter admin ID" value={newId} onChange={(e) => setNewId(e.target.value)}
+                  className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40" />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Password <span className="text-red-400">*</span></Label>
-                <Input type="password" placeholder="Enter password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7]" />
+                <Label className="text-sm text-white/70">Password <span className="text-red-400">*</span></Label>
+                <Input type="password" placeholder="Enter password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+                  className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40" />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Display Name <span className="text-red-400">*</span></Label>
-                <Input placeholder="Enter display name" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7]" />
+                <Label className="text-sm text-white/70">Display Name <span className="text-red-400">*</span></Label>
+                <Input placeholder="Enter display name" value={newName} onChange={(e) => setNewName(e.target.value)}
+                  className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40" />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Initial Balance</Label>
-                <Input type="number" min="1000" max="100000" value={newInitialBalance} onChange={(e) => setNewInitialBalance(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7]" />
-                <p className="text-xs text-slate-500">Min: 1,000 | Max: 100,000</p>
+                <Label className="text-sm text-white/70">Initial Balance</Label>
+                <Input type="number" min="1000" max="100000" value={newBal} onChange={(e) => setNewBal(e.target.value)}
+                  className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40" />
+                <p className="text-xs text-white/25">Min: 1,000 | Max: 100,000</p>
               </div>
-              <Button onClick={handleCreateAdmin} disabled={creating} className="w-full h-11 btn-primary rounded-xl text-sm">
+              <Button onClick={handleCreate} disabled={creating} className="w-full h-12 btn-gradient rounded-xl text-sm">
                 {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Admin'}
               </Button>
             </div>
@@ -238,94 +153,76 @@ export default function AdminManager() {
         </Dialog>
       </div>
 
-      {/* Admin Cards */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="lr-card p-5">
+            <div key={i} className="glass rounded-2xl p-5">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-xl" />
-                  <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div>
-                </div>
+                <div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-xl" /><div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div>
               </div>
               <Skeleton className="h-3 w-full" />
             </div>
           ))}
         </div>
       ) : admins.length === 0 ? (
-        <div className="lr-card p-12 flex flex-col items-center justify-center text-slate-500">
+        <div className="glass rounded-2xl p-14 flex flex-col items-center text-white/25">
           <Users className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No admins created yet</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {admins.map((admin) => (
-            <div key={admin.id} className="lr-card p-5 transition-colors">
+            <div key={admin.id} className="glass rounded-2xl p-5 transition-all duration-200 hover:border-white/15">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#09D1C7]/10 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-[#09D1C7]" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(9,209,199,0.1)' }}>
+                    <Shield className="w-5 h-5" style={{ color: '#09D1C7' }} />
                   </div>
                   <div>
                     <h3 className="font-medium text-white text-sm">{admin.displayName}</h3>
-                    <p className="text-xs text-slate-500">@{admin.adminId}</p>
+                    <p className="text-xs text-white/35">@{admin.adminId}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Badge variant="outline" className={
-                    admin.status === 'active'
-                      ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10'
-                      : 'text-red-400 border-red-500/20 bg-red-500/10'
-                  }>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" className={`text-xs rounded-lg px-2 py-0.5 ${admin.status === 'active' ? 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10' : 'text-red-400 border-red-500/25 bg-red-500/10'}`}>
                     {admin.status}
                   </Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-white hover:bg-slate-800">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/30 hover:text-white/60 hover:bg-white/10 rounded-lg">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-slate-900 border-slate-700" align="end">
-                      <DropdownMenuItem onClick={() => openBalanceDialog(admin)}
-                        className="text-slate-300 focus:text-white focus:bg-slate-800 cursor-pointer">
-                        <Wallet className="w-4 h-4 mr-2 text-[#09D1C7]" /> Set Balance
+                    <DropdownMenuContent className="glass-strong rounded-xl border-white/10" align="end">
+                      <DropdownMenuItem onClick={() => { setSelAdmin(admin); setBalAmt(''); setBalType('credit'); setBalanceOpen(true); }}
+                        className="text-white/60 focus:text-white focus:bg-white/10 cursor-pointer rounded-lg">
+                        <Wallet className="w-4 h-4 mr-2" style={{ color: '#09D1C7' }} /> Set Balance
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-slate-700" />
+                      <DropdownMenuSeparator className="bg-white/[0.06]" />
                       {admin.status === 'active' ? (
-                        <DropdownMenuItem onClick={() => setConfirmAction({ type: 'block', admin })}
-                          className="text-amber-400 focus:text-amber-300 focus:bg-amber-500/10 cursor-pointer">
+                        <DropdownMenuItem onClick={() => setConfirm({ type: 'block', admin })}
+                          className="text-amber-400/70 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer rounded-lg">
                           <Ban className="w-4 h-4 mr-2" /> Block
                         </DropdownMenuItem>
                       ) : (
-                        <DropdownMenuItem onClick={() => setConfirmAction({ type: 'unblock', admin })}
-                          className="text-emerald-400 focus:text-emerald-300 focus:bg-emerald-500/10 cursor-pointer">
+                        <DropdownMenuItem onClick={() => setConfirm({ type: 'unblock', admin })}
+                          className="text-emerald-400/70 focus:text-emerald-400 focus:bg-emerald-500/10 cursor-pointer rounded-lg">
                           <RotateCcw className="w-4 h-4 mr-2" /> Unblock
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuSeparator className="bg-slate-700" />
-                      <DropdownMenuItem onClick={() => setConfirmAction({ type: 'delete', admin })}
-                        className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer">
+                      <DropdownMenuSeparator className="bg-white/[0.06]" />
+                      <DropdownMenuItem onClick={() => setConfirm({ type: 'delete', admin })}
+                        className="text-red-400/70 focus:text-red-400 focus:bg-red-500/10 cursor-pointer rounded-lg">
                         <Trash2 className="w-4 h-4 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Balance</span>
-                  <span className="font-semibold text-[#09D1C7]">{admin.balance || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Initial</span>
-                  <span className="text-slate-400">{admin.initialBalance || 0}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
-                  <span className="text-slate-600">Created</span>
-                  <span className="text-slate-400">{formatDate(admin.createdAt)}</span>
-                </div>
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between"><span className="text-white/35">Balance</span><span className="font-semibold text-gradient">{admin.balance || 0}</span></div>
+                <div className="flex justify-between"><span className="text-white/35">Initial</span><span className="text-white/50">{admin.initialBalance || 0}</span></div>
+                <div className="flex justify-between pt-2.5 border-t border-white/[0.06]"><span className="text-white/25">Created</span><span className="text-white/40">{formatDate(admin.createdAt)}</span></div>
               </div>
             </div>
           ))}
@@ -334,48 +231,33 @@ export default function AdminManager() {
 
       {/* Balance Dialog */}
       <Dialog open={balanceOpen} onOpenChange={setBalanceOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white">Adjust Balance</DialogTitle>
-          </DialogHeader>
-          {selectedAdmin && (
+        <DialogContent className="glass-strong rounded-2xl sm:max-w-md border-white/10">
+          <DialogHeader><DialogTitle className="text-white text-lg">Adjust Balance</DialogTitle></DialogHeader>
+          {selAdmin && (
             <div className="space-y-4 mt-2">
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Admin:</span>
-                  <span className="text-white">{selectedAdmin.displayName}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-slate-400">Current:</span>
-                  <span className="text-[#09D1C7] font-semibold">{selectedAdmin.balance || 0}</span>
-                </div>
+              <div className="p-3.5 rounded-xl glass">
+                <div className="flex justify-between text-sm"><span className="text-white/40">Admin:</span><span className="text-white font-medium">{selAdmin.displayName}</span></div>
+                <div className="flex justify-between text-sm mt-1"><span className="text-white/40">Current:</span><span className="font-bold text-gradient">{selAdmin.balance || 0}</span></div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Type</Label>
-                <Select value={balanceType} onValueChange={(v) => setBalanceType(v as 'credit' | 'debit')}>
-                  <SelectTrigger className="h-10 bg-slate-800/50 border-slate-700/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-700">
+                <Label className="text-sm text-white/70">Type</Label>
+                <Select value={balType} onValueChange={(v) => setBalType(v as 'credit' | 'debit')}>
+                  <SelectTrigger className="h-11 rounded-xl glass text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="glass-strong rounded-xl border-white/10">
                     <SelectItem value="credit">Credit (Add)</SelectItem>
                     <SelectItem value="debit">Debit (Remove)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-slate-300">Amount</Label>
-                <Input type="number" min="1" placeholder="Enter amount" value={balanceAmount}
-                  onChange={(e) => setBalanceAmount(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700/50 focus:border-[#09D1C7]" />
+                <Label className="text-sm text-white/70">Amount</Label>
+                <Input type="number" min="1" placeholder="Enter amount" value={balAmt} onChange={(e) => setBalAmt(e.target.value)}
+                  className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40" />
               </div>
-              <div className="flex gap-3">
-                <DialogClose asChild>
-                  <Button className="flex-1 h-10 bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 rounded-xl">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button onClick={handleAdjustBalance} disabled={adjusting} className="flex-1 h-10 btn-primary rounded-xl text-sm">
-                  {adjusting ? <Loader2 className="w-4 h-4 animate-spin" /> : `${balanceType === 'credit' ? 'Credit' : 'Debit'}`}
+              <div className="flex gap-3 pt-1">
+                <DialogClose asChild><Button className="flex-1 h-11 glass rounded-xl text-white/60 hover:text-white hover:bg-white/10">Cancel</Button></DialogClose>
+                <Button onClick={handleBalance} disabled={adjusting} className="flex-1 h-11 btn-gradient rounded-xl text-sm">
+                  {adjusting ? <Loader2 className="w-4 h-4 animate-spin" /> : `${balType === 'credit' ? 'Credit' : 'Debit'}`}
                 </Button>
               </div>
             </div>
@@ -384,36 +266,20 @@ export default function AdminManager() {
       </Dialog>
 
       {/* Confirm Dialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700">
+      <AlertDialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
+        <AlertDialogContent className="glass-strong rounded-2xl border-white/10">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
-              {confirmAction?.type === 'delete' ? 'Delete Admin' : confirmAction?.type === 'block' ? 'Block Admin' : 'Unblock Admin'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
-              {confirmAction?.type === 'delete'
-                ? `Delete "${confirmAction?.admin.displayName}"? All their keys will be permanently deleted.`
-                : confirmAction?.type === 'block'
-                  ? `Block "${confirmAction?.admin.displayName}"? They will lose access.`
-                  : `Unblock "${confirmAction?.admin.displayName}"?`}
+            <AlertDialogTitle className="text-white">{confirm?.type === 'delete' ? 'Delete Admin' : confirm?.type === 'block' ? 'Block Admin' : 'Unblock Admin'}</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              {confirm?.type === 'delete' ? `Delete "${confirm?.admin.displayName}"? All keys will be removed.`
+                : `${confirm?.type === 'block' ? 'Block' : 'Unblock'} "${confirm?.admin.displayName}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleAdminAction}
-              disabled={actionLoading}
-              className={
-                confirmAction?.type === 'delete'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
-                  : confirmAction?.type === 'block'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
-              }
-            >
-              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : confirmAction?.type}
+            <AlertDialogCancel className="glass rounded-xl text-white/60 hover:text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAction} disabled={actionLoading}
+              className={`rounded-xl ${confirm?.type === 'delete' ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30' : confirm?.type === 'block' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'}`}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : confirm?.type}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

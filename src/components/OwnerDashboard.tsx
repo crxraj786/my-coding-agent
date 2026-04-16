@@ -16,24 +16,24 @@ export default function OwnerDashboard() {
       <div className="space-y-6">
         <StatsCards />
         <Tabs defaultValue="keys" className="w-full">
-          <TabsList className="bg-slate-800/50 border border-slate-700/50 h-9">
-            <TabsTrigger value="keys" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-md text-xs">
+          <TabsList className="glass rounded-xl h-10 p-1">
+            <TabsTrigger value="keys" className="rounded-lg text-sm font-medium transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white">
               Licence Keys
             </TabsTrigger>
-            <TabsTrigger value="admins" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-md text-xs">
+            <TabsTrigger value="admins" className="rounded-lg text-sm font-medium transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white">
               Manage Admins
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="keys" className="space-y-4 mt-4">
+          <TabsContent value="keys" className="space-y-4 mt-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Manage all licence keys</span>
+              <span className="text-sm text-white/40">Manage all licence keys</span>
               <KeyGenerator onKeyGenerated={() => setRefreshKey(p => p + 1)} />
             </div>
             <KeyTable key={`keys-${refreshKey}`} role="owner" />
           </TabsContent>
 
-          <TabsContent value="admins" className="mt-4">
+          <TabsContent value="admins" className="mt-5">
             <AdminManager />
           </TabsContent>
         </Tabs>
