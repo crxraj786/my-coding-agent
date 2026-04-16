@@ -12,13 +12,16 @@ export default function AdminDashboard() {
   return (
     <DashboardShell title="LR ADMIN PANEL" role="admin">
       <div className="space-y-6">
+        {/* Statistics Overview */}
         <StatsCards />
+
+        {/* Key Management */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/40">Manage your licence keys</span>
-            <KeyGenerator onKeyGenerated={() => setRefreshKey(p => p + 1)} />
+            <KeyGenerator onKeyGenerated={() => setRefreshKey((p) => p + 1)} />
           </div>
-          <KeyTable key={`keys-${refreshKey}`} role="admin" />
+          <KeyTable key={`admin-keys-${refreshKey}`} role="admin" />
         </div>
       </div>
     </DashboardShell>

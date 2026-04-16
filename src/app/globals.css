@@ -156,7 +156,7 @@
   background: rgba(9, 209, 199, 0.4);
 }
 
-/* Splash screen animation */
+/* Animations */
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

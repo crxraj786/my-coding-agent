@@ -24,14 +24,17 @@ export default function StatsCards() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchStats = async () => {
       try {
         const data = await getStats();
         setStats(data.stats || data);
-      } catch { setStats(null); }
-      finally { setLoading(false); }
+      } catch {
+        setStats(null);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
+    fetchStats();
     const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
   }, []);

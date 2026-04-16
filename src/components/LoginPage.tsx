@@ -10,24 +10,20 @@ import { useAuthStore } from '@/store/auth-store';
 import { loginOwner, loginAdmin } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
-/* ─── Splash Screen ─── */
+/* ─── Splash Screen (1.5s) ─── */
 function SplashScreen({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onFinish, 2200);
+    const t = setTimeout(onFinish, 1500);
     return () => clearTimeout(t);
   }, [onFinish]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background orbs */}
       <div className="orb w-72 h-72 -top-20 -left-20" style={{ background: 'rgba(9,209,199,0.15)' }} />
       <div className="orb w-64 h-64 -bottom-16 -right-16" style={{ background: 'rgba(70,223,177,0.12)' }} />
       <div className="orb w-48 h-48 top-1/3 right-1/4" style={{ background: 'rgba(128,238,152,0.08)' }} />
 
-      {/* Logo */}
-      <div
-        className="relative z-10 flex flex-col items-center opacity-0 animate-fade-up"
-      >
+      <div className="relative z-10 flex flex-col items-center opacity-0 animate-fade-up">
         <div
           className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6 glow-teal"
           style={{ background: 'linear-gradient(135deg, #09D1C7, #46DFB1)' }}
@@ -40,8 +36,6 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
         <p className="text-sm mt-1" style={{ color: '#09D1C7' }}>
           Verification System
         </p>
-
-        {/* Loading dots */}
         <div className="flex items-center gap-1.5 mt-10">
           {[0, 1, 2].map((i) => (
             <div
@@ -63,6 +57,7 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState('owner');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [adminId, setAdminId] = useState('');
@@ -77,6 +72,8 @@ export default function LoginPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const clearError = () => setError('');
 
   const handleOwnerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +105,8 @@ export default function LoginPage() {
     try {
       const data = await loginAdmin(adminId, adminPassword);
       login({
-        role: 'admin', token: data.token,
+        role: 'admin',
+        token: data.token,
         adminId: data.data?.adminId || adminId,
         displayName: data.data?.displayName,
         balance: data.data?.balance,
@@ -134,9 +132,12 @@ export default function LoginPage() {
       <div className="orb w-40 h-40 top-1/4 left-1/3" style={{ background: 'rgba(128,238,152,0.06)' }} />
 
       {/* Login Card */}
-      <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <div
+        className={`w-full max-w-md relative z-10 transition-all duration-700 ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <div className="glass rounded-3xl p-8 sm:p-10 shadow-2xl">
-
           {/* Header */}
           <div className="text-center mb-8">
             <div
@@ -148,13 +149,13 @@ export default function LoginPage() {
             <h1 className="text-xl font-bold text-white tracking-wide">
               LR LICENCE VERIFICATION
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--lr-4)' }}>
+            <p className="text-sm mt-1" style={{ color: '#15919B' }}>
               Secure Key Management System
             </p>
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="owner" className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); clearError(); }} className="w-full">
             <TabsList className="w-full grid grid-cols-2 mb-6 h-11 glass-strong rounded-xl p-1">
               <TabsTrigger
                 value="owner"
@@ -181,7 +182,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="owner@example.com"
                     value={ownerEmail}
-                    onChange={(e) => setOwnerEmail(e.target.value)}
+                    onChange={(e) => { setOwnerEmail(e.target.value); clearError(); }}
                     className="h-12 rounded-xl glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                     autoComplete="email"
                   />
@@ -193,7 +194,7 @@ export default function LoginPage() {
                       type={showOwnerPw ? 'text' : 'password'}
                       placeholder="Enter password"
                       value={ownerPassword}
-                      onChange={(e) => setOwnerPassword(e.target.value)}
+                      onChange={(e) => { setOwnerPassword(e.target.value); clearError(); }}
                       className="h-12 rounded-xl pr-11 glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                       autoComplete="current-password"
                     />
@@ -239,7 +240,7 @@ export default function LoginPage() {
                     type="text"
                     placeholder="Enter your admin ID"
                     value={adminId}
-                    onChange={(e) => setAdminId(e.target.value)}
+                    onChange={(e) => { setAdminId(e.target.value); clearError(); }}
                     className="h-12 rounded-xl glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                     autoComplete="username"
                   />
@@ -251,7 +252,7 @@ export default function LoginPage() {
                       type={showAdminPw ? 'text' : 'password'}
                       placeholder="Enter password"
                       value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
+                      onChange={(e) => { setAdminPassword(e.target.value); clearError(); }}
                       className="h-12 rounded-xl pr-11 glass-strong text-white placeholder:text-white/30 focus:border-[#09D1C7]/50"
                       autoComplete="current-password"
                     />

@@ -6,33 +6,34 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
 import { ReactNode } from 'react';
 
-interface Props {
+interface DashboardShellProps {
   title: string;
   role: 'owner' | 'admin';
   children: ReactNode;
 }
 
-export default function DashboardShell({ title, role, children }: Props) {
+export default function DashboardShell({ title, role, children }: DashboardShellProps) {
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const info = role === 'owner'
-    ? { label: 'Owner', value: user?.email || '' }
-    : { label: 'Admin', value: user?.displayName || user?.adminId || '' };
+  const info =
+    role === 'owner'
+      ? { label: 'Owner', value: user?.email || '' }
+      : { label: 'Admin', value: user?.displayName || user?.adminId || '' };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
+      {/* Sticky Header */}
       <header className="sticky top-0 z-50">
         <div className="glass-strong border-b border-white/[0.06] shadow-lg">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            {/* Left */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            {/* Left - Logo & Title */}
             <div className="flex items-center gap-3">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: 'linear-gradient(135deg, #09D1C7, #46DFB1)' }}
               >
-                <Shield className="w-4.5 h-4.5 text-white" />
+                <Shield className="w-[18px] h-[18px] text-white" />
               </div>
               <h1 className="text-sm sm:text-base font-bold text-white tracking-wide">
                 {title}
@@ -54,7 +55,7 @@ export default function DashboardShell({ title, role, children }: Props) {
 
               <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl glass">
                 <span className="text-xs text-white/40">{info.label}:</span>
-                <span className="text-sm text-white font-medium">{info.value}</span>
+                <span className="text-sm text-white font-medium truncate max-w-32">{info.value}</span>
               </div>
 
               <Button
@@ -92,12 +93,18 @@ export default function DashboardShell({ title, role, children }: Props) {
                 <Wallet className="w-4 h-4" style={{ color: '#09D1C7' }} />
                 <span className="text-xs text-white/40">Balance:</span>
                 <span className="text-sm font-bold text-gradient">{user.balance}</span>
+                {user.initialBalance !== undefined && (
+                  <span className="text-xs text-white/30">/ {user.initialBalance}</span>
+                )}
               </div>
             )}
             <Button
               variant="ghost"
               className="w-full text-white/50 hover:text-white hover:bg-white/10 justify-start rounded-xl"
-              onClick={() => { logout(); setMobileOpen(false); }}
+              onClick={() => {
+                logout();
+                setMobileOpen(false);
+              }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout
@@ -106,10 +113,17 @@ export default function DashboardShell({ title, role, children }: Props) {
         )}
       </header>
 
-      {/* Main */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      {/* Main Content */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {children}
       </main>
+
+      {/* Footer */}
+      <footer className="mt-auto py-4 text-center">
+        <p className="text-xs text-white/20">
+          LR Licence Verification System &copy; {new Date().getFullYear()}
+        </p>
+      </footer>
     </div>
   );
 }
