@@ -9,26 +9,15 @@ import KeyTable from '@/components/KeyTable';
 export default function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleKeyGenerated = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
-
   return (
     <DashboardShell title="LR ADMIN PANEL" role="admin">
       <div className="space-y-6">
-        {/* Stats */}
-        <StatsCards role="admin" />
-
-        {/* Key Management */}
+        <StatsCards />
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-white/40">
-              Manage your licence keys
-            </div>
-            <KeyGenerator onKeyGenerated={handleKeyGenerated} />
+            <span className="text-sm text-slate-500">Manage your licence keys</span>
+            <KeyGenerator onKeyGenerated={() => setRefreshKey(p => p + 1)} />
           </div>
-
-          {/* Key Table */}
           <KeyTable key={`keys-${refreshKey}`} role="admin" />
         </div>
       </div>

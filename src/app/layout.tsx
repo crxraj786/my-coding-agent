@@ -29,8 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ background: 'linear-gradient(135deg, #213A58 0%, #0C6478 50%, #15919B 100%)' }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0f172a]`}
       >
         {children}
         <Toaster />
