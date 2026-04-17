@@ -128,8 +128,8 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
       fetchKeys();
     } catch (err: unknown) {
       toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Action failed',
+        title: 'Action Failed',
+        description: err instanceof Error ? err.message : 'Operation failed',
         variant: 'destructive',
       });
     } finally {
@@ -148,7 +148,7 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
     return (
       <Badge
         variant="outline"
-        className={`${styles[effectiveStatus] || 'bg-white/10 text-white/50'} text-xs rounded-lg px-2.5 py-0.5`}
+        className={`${styles[effectiveStatus] || 'bg-white/10 text-white/50'} text-xs rounded-lg px-2.5 py-0.5 font-medium`}
       >
         {effectiveStatus}
       </Badge>
@@ -156,57 +156,62 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
   };
 
   const maskKey = (k: string) =>
-    k.length <= 8 ? '•'.repeat(k.length) : k.slice(0, 4) + '•••' + k.slice(-4);
+    k.length <= 8 ? '•'.repeat(k.length) : k.slice(0, 4) + '•••••' + k.slice(-4);
 
   return (
     <div className="space-y-4">
       {/* Tabs + Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="glass rounded-xl h-9 p-1">
+          <TabsList className="glass rounded-xl h-10 p-1">
             <TabsTrigger
               value="active"
-              className="rounded-lg text-xs font-medium transition-all data-[state=active]:bg-white/10 data-[state=active]:text-emerald-400"
+              className="rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 text-white/40 hover:text-white/60"
             >
               Active
             </TabsTrigger>
             <TabsTrigger
               value="blocked"
-              className="rounded-lg text-xs font-medium transition-all data-[state=active]:bg-white/10 data-[state=active]:text-red-400"
+              className="rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-red-500/15 data-[state=active]:text-red-400 text-white/40 hover:text-white/60"
             >
               Blocked
             </TabsTrigger>
             <TabsTrigger
               value="expired"
-              className="rounded-lg text-xs font-medium transition-all data-[state=active]:bg-white/10 data-[state=active]:text-amber-400"
+              className="rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-400 text-white/40 hover:text-white/60"
             >
               Expired
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className="relative w-full sm:w-60">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
           <Input
-            placeholder="Search keys..."
+            placeholder="Search by username or key..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-9 text-sm glass rounded-xl"
+            className="h-10 pl-10 text-sm glass rounded-xl placeholder:text-white/20 input-teal"
           />
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="glass rounded-2xl overflow-hidden custom-scrollbar">
         {loading ? (
           <div className="p-6 space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-xl" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-xl animate-shimmer" />
             ))}
           </div>
         ) : keys.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-white/30">
-            <Key className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No {tab} keys found</p>
+          <div className="flex flex-col items-center justify-center py-20 text-white/25">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <Key className="w-7 h-7 opacity-40" />
+            </div>
+            <p className="text-sm font-medium">No {tab} keys found</p>
+            <p className="text-xs text-white/15 mt-1">
+              {search ? 'Try a different search term' : 'Keys will appear here when generated'}
+            </p>
           </div>
         ) : (
           <>
@@ -215,25 +220,25 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/[0.04] hover:bg-transparent">
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Username
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Key
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Created
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Expiry
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Devices
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider">
                       Status
                     </TableHead>
-                    <TableHead className="text-white/40 font-medium text-xs text-right">
+                    <TableHead className="text-white/35 font-medium text-xs uppercase tracking-wider text-right">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -242,19 +247,20 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                   {keys.map((item) => (
                     <TableRow
                       key={item.id}
-                      className="border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+                      className="border-white/[0.04] table-row-hover"
                     >
-                      <TableCell className="text-white font-medium text-sm py-3">
+                      <TableCell className="text-white font-medium text-sm py-3.5">
                         {item.username}
                       </TableCell>
-                      <TableCell className="py-3">
-                        <div className="flex items-center gap-1">
-                          <code className="text-xs text-white/50 font-mono bg-white/5 px-2 py-1 rounded-lg">
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <code className="text-xs text-white/45 font-mono bg-white/5 px-2.5 py-1 rounded-lg max-w-40 truncate">
                             {visibleKeys.has(item.id) ? item.key : maskKey(item.key)}
                           </code>
                           <button
                             onClick={() => toggleKeyVisibility(item.id)}
-                            className="text-white/25 hover:text-white/50 transition-colors p-0.5"
+                            className="text-white/20 hover:text-white/50 transition-colors p-1 rounded-md hover:bg-white/5"
+                            aria-label="Toggle key visibility"
                           >
                             {visibleKeys.has(item.id) ? (
                               <EyeOff className="w-3.5 h-3.5" />
@@ -264,7 +270,8 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                           </button>
                           <button
                             onClick={() => copyKey(item.key, item.id)}
-                            className="text-white/25 hover:text-white/50 transition-colors p-0.5"
+                            className="text-white/20 hover:text-white/50 transition-colors p-1 rounded-md hover:bg-white/5"
+                            aria-label="Copy key"
                           >
                             {copiedKeys.has(item.id) ? (
                               <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -274,28 +281,30 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                           </button>
                         </div>
                       </TableCell>
-                      <TableCell className="text-white/35 text-xs py-3 whitespace-nowrap">
+                      <TableCell className="text-white/30 text-xs py-3.5 whitespace-nowrap">
                         {formatDate(item.createdAt)}
                       </TableCell>
-                      <TableCell className="text-white/35 text-xs py-3 whitespace-nowrap">
+                      <TableCell className="text-white/30 text-xs py-3.5 whitespace-nowrap">
                         {formatDate(item.expiryAt)}
                       </TableCell>
-                      <TableCell className="py-3">
-                        <div className="flex items-center gap-1 text-xs text-white/40">
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-1.5 text-xs text-white/35">
                           <Monitor className="w-3 h-3" />
-                          {item.usedDevices?.length || 0}/{item.devicesLimit}
+                          <span>
+                            {item.usedDevices?.length || 0}/{item.devicesLimit}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-3">
+                      <TableCell className="py-3.5">
                         {getStatusBadge(item.status, item.expiryAt)}
                       </TableCell>
-                      <TableCell className="py-3 text-right">
+                      <TableCell className="py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {item.status === 'active' && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 px-2 text-xs text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg"
+                              className="h-8 px-2.5 text-xs text-amber-400/50 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all duration-200"
                               onClick={() =>
                                 setConfirm({ type: 'block', key: item })
                               }
@@ -308,7 +317,7 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 px-2 text-xs text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg"
+                              className="h-8 px-2.5 text-xs text-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all duration-200"
                               onClick={() =>
                                 setConfirm({ type: 'unblock', key: item })
                               }
@@ -320,10 +329,11 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-white/25 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                            className="h-8 w-8 p-0 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                             onClick={() =>
                               setConfirm({ type: 'delete', key: item })
                             }
+                            aria-label="Delete key"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -338,20 +348,20 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
             {/* Mobile Card Layout */}
             <div className="md:hidden divide-y divide-white/[0.04]">
               {keys.map((item) => (
-                <div key={item.id} className="p-4 space-y-3">
+                <div key={item.id} className="p-4 space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-white text-sm">
+                    <span className="font-semibold text-white text-sm">
                       {item.username}
                     </span>
                     {getStatusBadge(item.status, item.expiryAt)}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <code className="text-xs text-white/50 font-mono bg-white/5 px-2 py-1 rounded-lg flex-1 truncate">
+                  <div className="flex items-center gap-1.5">
+                    <code className="text-xs text-white/45 font-mono bg-white/5 px-2.5 py-1.5 rounded-lg flex-1 truncate">
                       {visibleKeys.has(item.id) ? item.key : maskKey(item.key)}
                     </code>
                     <button
                       onClick={() => toggleKeyVisibility(item.id)}
-                      className="text-white/25 hover:text-white/50 p-1"
+                      className="text-white/20 hover:text-white/50 transition-colors p-1.5 rounded-md hover:bg-white/5"
                     >
                       {visibleKeys.has(item.id) ? (
                         <EyeOff className="w-3.5 h-3.5" />
@@ -361,7 +371,7 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                     </button>
                     <button
                       onClick={() => copyKey(item.key, item.id)}
-                      className="text-white/25 hover:text-white/50 p-1"
+                      className="text-white/20 hover:text-white/50 transition-colors p-1.5 rounded-md hover:bg-white/5"
                     >
                       {copiedKeys.has(item.id) ? (
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -370,7 +380,7 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                       )}
                     </button>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-white/35">
+                  <div className="flex items-center justify-between text-xs text-white/30">
                     <span>Exp: {formatDate(item.expiryAt)}</span>
                     <div className="flex items-center gap-1">
                       <Monitor className="w-3 h-3" />
@@ -382,12 +392,12 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-3 text-xs text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10 flex-1 rounded-lg"
+                        className="h-9 px-3 text-xs text-amber-400/50 hover:text-amber-400 hover:bg-amber-500/10 flex-1 rounded-lg transition-all duration-200 font-medium"
                         onClick={() =>
                           setConfirm({ type: 'block', key: item })
                         }
                       >
-                        <Ban className="w-3.5 h-3.5 mr-1" />
+                        <Ban className="w-3.5 h-3.5 mr-1.5" />
                         Block
                       </Button>
                     )}
@@ -395,24 +405,24 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-3 text-xs text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-500/10 flex-1 rounded-lg"
+                        className="h-9 px-3 text-xs text-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-500/10 flex-1 rounded-lg transition-all duration-200 font-medium"
                         onClick={() =>
                           setConfirm({ type: 'unblock', key: item })
                         }
                       >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                         Unblock
                       </Button>
                     )}
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 px-3 text-xs text-white/25 hover:text-red-400 hover:bg-red-500/10 flex-1 rounded-lg"
+                      className="h-9 px-3 text-xs text-white/20 hover:text-red-400 hover:bg-red-500/10 flex-1 rounded-lg transition-all duration-200 font-medium"
                       onClick={() =>
                         setConfirm({ type: 'delete', key: item })
                       }
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                       Delete
                     </Button>
                   </div>
@@ -422,28 +432,30 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
-                <p className="text-xs text-white/30">
+              <div className="flex items-center justify-between px-4 py-3.5 border-t border-white/[0.04]">
+                <p className="text-xs text-white/25 font-medium">
                   Page {page} of {totalPages}
                 </p>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
+                    className="h-8 px-3 text-white/35 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 font-medium"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Prev
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
+                    className="h-8 px-3 text-white/35 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 font-medium"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
               </div>
@@ -459,34 +471,34 @@ export default function KeyTable({ role = 'admin' }: KeyTableProps) {
           if (!open) setConfirm(null);
         }}
       >
-        <AlertDialogContent className="glass-strong rounded-2xl border-white/10">
+        <AlertDialogContent className="glass-strong rounded-2xl border-white/10 p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
+            <AlertDialogTitle className="text-white text-base">
               {confirm?.type === 'delete'
                 ? 'Delete Key'
                 : confirm?.type === 'block'
                   ? 'Block Key'
                   : 'Unblock Key'}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogDescription className="text-white/40 text-sm leading-relaxed">
               {confirm?.type === 'delete'
                 ? `Permanently delete the key for "${confirm?.key.username}"? This action cannot be undone.`
                 : `${confirm?.type === 'block' ? 'Block' : 'Unblock'} the key for "${confirm?.key.username}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="glass rounded-xl text-white/60 hover:text-white hover:bg-white/10">
+          <AlertDialogFooter className="gap-3 mt-4">
+            <AlertDialogCancel className="glass rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-medium">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleAction}
               disabled={actionLoading}
-              className={`rounded-xl ${
+              className={`rounded-xl font-medium transition-all duration-200 ${
                 confirm?.type === 'delete'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/25 hover:bg-red-500/30'
                   : confirm?.type === 'block'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/25 hover:bg-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/30'
               }`}
             >
               {actionLoading ? (

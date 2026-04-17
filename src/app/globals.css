@@ -99,12 +99,17 @@
   }
 }
 
-/* Glass Card */
+/* ─── Glass Card ─── */
 .glass {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass:hover {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .glass-strong {
@@ -114,30 +119,55 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Gradient Button */
+/* ─── Gradient Button ─── */
 .btn-gradient {
   background: linear-gradient(135deg, #09D1C7, #46DFB1);
   color: #213A58;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #46DFB1, #80EE98);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .btn-gradient:hover {
-  background: linear-gradient(135deg, #46DFB1, #80EE98);
   box-shadow: 0 4px 24px rgba(9, 209, 199, 0.35);
   transform: translateY(-1px);
 }
 
-.btn-gradient:active {
-  transform: translateY(0);
+.btn-gradient:hover::before {
+  opacity: 1;
 }
 
-/* Subtle glow */
+.btn-gradient:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(9, 209, 199, 0.25);
+}
+
+.btn-gradient span,
+.btn-gradient svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Subtle glow ─── */
 .glow-teal {
   box-shadow: 0 0 40px rgba(9, 209, 199, 0.15);
 }
 
-/* Scrollbar */
+.glow-teal-strong {
+  box-shadow: 0 0 60px rgba(9, 209, 199, 0.25), 0 0 120px rgba(9, 209, 199, 0.1);
+}
+
+/* ─── Scrollbar ─── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -156,7 +186,17 @@
   background: rgba(9, 209, 199, 0.4);
 }
 
-/* Animations */
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(9, 209, 199, 0.2) transparent;
+}
+
+.custom-scrollbar:hover {
+  scrollbar-color: rgba(9, 209, 199, 0.4) transparent;
+}
+
+/* ─── Animations ─── */
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
@@ -173,13 +213,64 @@
   50% { opacity: 0.8; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
 .animate-fade-up {
   animation: fadeSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .animate-delay-1 { animation-delay: 0.1s; }
@@ -188,7 +279,7 @@
 .animate-delay-4 { animation-delay: 0.4s; }
 .animate-delay-5 { animation-delay: 0.5s; }
 
-/* Gradient text */
+/* ─── Gradient text ─── */
 .text-gradient {
   background: linear-gradient(135deg, #80EE98, #09D1C7);
   -webkit-background-clip: text;
@@ -196,10 +287,62 @@
   background-clip: text;
 }
 
-/* Orb decorations */
+.text-gradient-warm {
+  background: linear-gradient(135deg, #09D1C7, #46DFB1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Orb decorations ─── */
 .orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
   pointer-events: none;
+}
+
+/* ─── Stat card hover effect ─── */
+.stat-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Table row hover ─── */
+.table-row-hover {
+  transition: background-color 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── Input focus ring ─── */
+.input-teal {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-teal:focus {
+  border-color: rgba(9, 209, 199, 0.4);
+  box-shadow: 0 0 0 3px rgba(9, 209, 199, 0.08);
+}
+
+/* ─── Badge pulse ─── */
+.badge-active {
+  position: relative;
+}
+
+.badge-active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: rgba(128, 238, 152, 0.15);
+  animation: pulseGlow 2s ease-in-out infinite;
+  z-index: -1;
 }

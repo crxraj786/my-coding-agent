@@ -54,21 +54,37 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
 
   const handleGenerate = async () => {
     if (!username.trim()) {
-      toast({ title: 'Error', description: 'Username is required.', variant: 'destructive' });
+      toast({
+        title: 'Validation Error',
+        description: 'Username is required.',
+        variant: 'destructive',
+      });
       return;
     }
     const val = parseInt(validityValue);
     const dev = parseInt(devicesCount);
     if (!val || val <= 0) {
-      toast({ title: 'Error', description: 'Validity must be a positive number.', variant: 'destructive' });
+      toast({
+        title: 'Validation Error',
+        description: 'Validity must be a positive number.',
+        variant: 'destructive',
+      });
       return;
     }
     if (!dev || dev <= 0) {
-      toast({ title: 'Error', description: 'Devices must be a positive number.', variant: 'destructive' });
+      toast({
+        title: 'Validation Error',
+        description: 'Devices count must be a positive number.',
+        variant: 'destructive',
+      });
       return;
     }
     if (insufficientBalance) {
-      toast({ title: 'Error', description: 'Insufficient balance to generate this key.', variant: 'destructive' });
+      toast({
+        title: 'Insufficient Balance',
+        description: 'You do not have enough balance to generate this key.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -81,7 +97,7 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
         validityValue: val,
         devicesLimit: dev,
       });
-      toast({ title: 'Key Generated!', description: `Created for "${username.trim()}"` });
+      toast({ title: 'Key Generated!', description: `Licence created for "${username.trim()}"` });
       const generatedKey = typeof data.key === 'string' ? data.key : data.key?.key;
       if (generatedKey) {
         navigator.clipboard.writeText(generatedKey).catch(() => {});
@@ -91,7 +107,7 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
       onKeyGenerated();
     } catch (err: unknown) {
       toast({
-        title: 'Error',
+        title: 'Generation Failed',
         description: err instanceof Error ? err.message : 'Failed to generate key.',
         variant: 'destructive',
       });
@@ -105,54 +121,59 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
       <DialogTrigger asChild>
         <Button className="btn-gradient rounded-xl h-10 text-sm gap-1.5">
           <KeyRound className="w-4 h-4" />
-          Generate Key
+          <span>Generate Key</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="glass-strong rounded-2xl sm:max-w-md border-white/10">
+      <DialogContent className="glass-strong rounded-2xl sm:max-w-md border-white/10 p-6 sm:p-7">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2 text-lg">
-            <Sparkles className="w-5 h-5" style={{ color: '#09D1C7' }} />
+          <DialogTitle className="text-white flex items-center gap-2.5 text-lg">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(9,209,199,0.15)' }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: '#09D1C7' }} />
+            </div>
             Generate Licence Key
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 mt-3">
+        <div className="space-y-5 mt-4">
           {/* Username */}
           <div className="space-y-2">
-            <Label className="text-sm text-white/70">
+            <Label className="text-sm text-white/60 font-medium">
               Username <span className="text-red-400">*</span>
             </Label>
             <Input
               placeholder="Enter username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40"
+              className="h-11 rounded-xl glass text-white placeholder:text-white/20 input-teal"
             />
           </div>
 
           {/* Manual Key */}
           <div className="space-y-2">
-            <Label className="text-sm text-white/70">
+            <Label className="text-sm text-white/60 font-medium">
               Manual Key{' '}
-              <span className="text-white/30 text-xs">(optional)</span>
+              <span className="text-white/25 text-xs font-normal">(optional)</span>
             </Label>
             <Input
               placeholder="Leave empty for auto-generated"
               value={manualKey}
               onChange={(e) => setManualKey(e.target.value)}
-              className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40"
+              className="h-11 rounded-xl glass text-white placeholder:text-white/20 input-teal"
             />
           </div>
 
           {/* Validity Type + Value */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-sm text-white/70">Validity Type</Label>
+              <Label className="text-sm text-white/60 font-medium">Validity Type</Label>
               <Select
                 value={validityType}
                 onValueChange={(v) => setValidityType(v as 'days' | 'hours')}
               >
-                <SelectTrigger className="h-11 rounded-xl glass text-white focus:border-[#09D1C7]/40">
+                <SelectTrigger className="h-11 rounded-xl glass text-white input-teal">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="glass-strong rounded-xl border-white/10">
@@ -162,45 +183,47 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm text-white/70">Value</Label>
+              <Label className="text-sm text-white/60 font-medium">Value</Label>
               <Input
                 type="number"
                 min="1"
                 placeholder="30"
                 value={validityValue}
                 onChange={(e) => setValidityValue(e.target.value)}
-                className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40"
+                className="h-11 rounded-xl glass text-white placeholder:text-white/20 input-teal"
               />
             </div>
           </div>
 
           {/* Devices Count */}
           <div className="space-y-2">
-            <Label className="text-sm text-white/70">Devices Count</Label>
+            <Label className="text-sm text-white/60 font-medium">Devices Count</Label>
             <Input
               type="number"
               min="1"
               placeholder="1"
               value={devicesCount}
               onChange={(e) => setDevicesCount(e.target.value)}
-              className="h-11 rounded-xl glass text-white placeholder:text-white/25 focus:border-[#09D1C7]/40"
+              className="h-11 rounded-xl glass text-white placeholder:text-white/20 input-teal"
             />
           </div>
 
           {/* Cost Display (admin only) */}
           {user?.role === 'admin' && (
             <div
-              className={`p-3.5 rounded-xl border text-sm transition-colors ${
+              className={`p-3.5 rounded-xl border text-sm transition-all duration-200 ${
                 insufficientBalance
                   ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                  : 'bg-[#09D1C7]/5 border-[#09D1C7]/15 text-white/70'
+                  : 'bg-[#09D1C7]/5 border-[#09D1C7]/15 text-white/60'
               }`}
             >
               <div className="flex items-center gap-2">
-                {insufficientBalance && <AlertTriangle className="w-4 h-4" />}
-                Cost: <span className="font-bold text-gradient">{cost}</span>
+                {insufficientBalance && <AlertTriangle className="w-4 h-4 shrink-0" />}
+                <span>Cost:</span>
+                <span className="font-bold text-gradient">{cost}</span>
+                <span className="text-white/25 text-xs">balance points</span>
                 {insufficientBalance && (
-                  <span className="text-red-400/60 text-xs ml-1">
+                  <span className="text-red-400/50 text-xs ml-auto">
                     (Balance: {user.balance})
                   </span>
                 )}
@@ -212,12 +235,12 @@ export default function KeyGenerator({ onKeyGenerated }: KeyGeneratorProps) {
           <Button
             onClick={handleGenerate}
             disabled={loading || insufficientBalance}
-            className="w-full h-12 btn-gradient rounded-xl text-sm"
+            className="w-full h-12 btn-gradient rounded-xl text-sm mt-1"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              'Generate Licence Key'
+              <span>Generate Licence Key</span>
             )}
           </Button>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { KeyRound } from 'lucide-react';
 import DashboardShell from '@/components/DashboardShell';
 import StatsCards from '@/components/StatsCards';
 import KeyGenerator from '@/components/KeyGenerator';
@@ -13,16 +14,21 @@ export default function AdminDashboard() {
     <DashboardShell title="LR ADMIN PANEL" role="admin">
       <div className="space-y-6">
         {/* Statistics Overview */}
-        <StatsCards />
+        <section>
+          <StatsCards />
+        </section>
 
         {/* Key Management */}
-        <div className="space-y-4">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-white/40">Manage your licence keys</span>
+            <div>
+              <h2 className="text-sm font-semibold text-white/70">Licence Keys</h2>
+              <p className="text-xs text-white/25 mt-0.5">Manage your licence keys</p>
+            </div>
             <KeyGenerator onKeyGenerated={() => setRefreshKey((p) => p + 1)} />
           </div>
           <KeyTable key={`admin-keys-${refreshKey}`} role="admin" />
-        </div>
+        </section>
       </div>
     </DashboardShell>
   );
