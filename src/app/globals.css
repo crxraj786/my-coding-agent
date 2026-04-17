@@ -86,12 +86,17 @@
   --sidebar-ring: #09D1C7;
 }
 
+/* ═══════════════════════════════════════════════════
+   Base Layer
+   ═══════════════════════════════════════════════════ */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     background: linear-gradient(160deg, #213A58 0%, #0C6478 40%, #15919B 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     color: #e8edf4;
     -webkit-font-smoothing: antialiased;
@@ -99,17 +104,26 @@
   }
 }
 
-/* ─── Glass Card ─── */
+/* ═══════════════════════════════════════════════════
+   Glass Card
+   ═══════════════════════════════════════════════════ */
+
 .glass {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .glass:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .glass-strong {
@@ -117,9 +131,24 @@
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* ─── Gradient Button ─── */
+/* ─── Glass Sidebar ─── */
+
+.glass-sidebar {
+  background: rgba(12, 100, 120, 0.15);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════
+   Gradient Button
+   ═══════════════════════════════════════════════════ */
+
 .btn-gradient {
   background: linear-gradient(135deg, #09D1C7, #46DFB1);
   color: #213A58;
@@ -127,6 +156,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 15px rgba(9, 209, 199, 0.2);
 }
 
 .btn-gradient::before {
@@ -139,8 +169,8 @@
 }
 
 .btn-gradient:hover {
-  box-shadow: 0 4px 24px rgba(9, 209, 199, 0.35);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 30px rgba(9, 209, 199, 0.35);
+  transform: translateY(-2px);
 }
 
 .btn-gradient:hover::before {
@@ -158,19 +188,27 @@
   z-index: 1;
 }
 
-/* ─── Subtle glow ─── */
+/* ═══════════════════════════════════════════════════
+   Glow Effects
+   ═══════════════════════════════════════════════════ */
+
 .glow-teal {
   box-shadow: 0 0 40px rgba(9, 209, 199, 0.15);
 }
 
 .glow-teal-strong {
-  box-shadow: 0 0 60px rgba(9, 209, 199, 0.25), 0 0 120px rgba(9, 209, 199, 0.1);
+  box-shadow:
+    0 0 60px rgba(9, 209, 199, 0.25),
+    0 0 120px rgba(9, 209, 199, 0.1);
 }
 
-/* ─── Scrollbar ─── */
+/* ═══════════════════════════════════════════════════
+   Custom Scrollbar
+   ═══════════════════════════════════════════════════ */
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -178,25 +216,28 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(9, 209, 199, 0.2);
+  background: rgba(9, 209, 199, 0.15);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(9, 209, 199, 0.4);
+  background: rgba(9, 209, 199, 0.3);
 }
 
 /* Firefox scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(9, 209, 199, 0.2) transparent;
+  scrollbar-color: rgba(9, 209, 199, 0.15) transparent;
 }
 
 .custom-scrollbar:hover {
-  scrollbar-color: rgba(9, 209, 199, 0.4) transparent;
+  scrollbar-color: rgba(9, 209, 199, 0.3) transparent;
 }
 
-/* ─── Animations ─── */
+/* ═══════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════ */
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
@@ -279,7 +320,10 @@
 .animate-delay-4 { animation-delay: 0.4s; }
 .animate-delay-5 { animation-delay: 0.5s; }
 
-/* ─── Gradient text ─── */
+/* ═══════════════════════════════════════════════════
+   Gradient Text
+   ═══════════════════════════════════════════════════ */
+
 .text-gradient {
   background: linear-gradient(135deg, #80EE98, #09D1C7);
   -webkit-background-clip: text;
@@ -294,7 +338,10 @@
   background-clip: text;
 }
 
-/* ─── Orb decorations ─── */
+/* ═══════════════════════════════════════════════════
+   Orb Decorations
+   ═══════════════════════════════════════════════════ */
+
 .orb {
   position: absolute;
   border-radius: 50%;
@@ -302,18 +349,24 @@
   pointer-events: none;
 }
 
-/* ─── Stat card hover effect ─── */
+/* ═══════════════════════════════════════════════════
+   Stat Card
+   ═══════════════════════════════════════════════════ */
+
 .stat-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
-/* ─── Table row hover ─── */
+/* ═══════════════════════════════════════════════════
+   Table Row Hover
+   ═══════════════════════════════════════════════════ */
+
 .table-row-hover {
   transition: background-color 0.2s ease;
 }
@@ -322,7 +375,10 @@
   background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* ─── Input focus ring ─── */
+/* ═══════════════════════════════════════════════════
+   Input Focus Ring
+   ═══════════════════════════════════════════════════ */
+
 .input-teal {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -332,7 +388,10 @@
   box-shadow: 0 0 0 3px rgba(9, 209, 199, 0.08);
 }
 
-/* ─── Badge pulse ─── */
+/* ═══════════════════════════════════════════════════
+   Badge Pulse
+   ═══════════════════════════════════════════════════ */
+
 .badge-active {
   position: relative;
 }
@@ -345,4 +404,63 @@
   background: rgba(128, 238, 152, 0.15);
   animation: pulseGlow 2s ease-in-out infinite;
   z-index: -1;
+}
+
+/* ═══════════════════════════════════════════════════
+   Navigation Items
+   ═══════════════════════════════════════════════════ */
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.nav-item.active {
+  background: rgba(9, 209, 199, 0.1);
+  color: #09D1C7;
+  border: 1px solid rgba(9, 209, 199, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════
+   Gradient Border
+   ═══════════════════════════════════════════════════ */
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(9, 209, 199, 0.3),
+    rgba(70, 223, 177, 0.1),
+    rgba(128, 238, 152, 0.2)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
